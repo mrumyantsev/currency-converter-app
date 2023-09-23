@@ -1,0 +1,6 @@
+package consts
+
+const (
+	LEN_OF_CURRENCIES_SCLICE_INITIAL int = 0
+	CAP_OF_CURRENCIES_SCLICE_INITIAL int = 25
+)
