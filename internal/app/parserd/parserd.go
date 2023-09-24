@@ -33,7 +33,10 @@ type ParserD struct {
 func New() *ParserD {
 	cfg := config.New()
 
-	cfg.Init()
+	err := cfg.Init()
+	if err != nil {
+		fastlog.Error("cannot initialize configuration", err)
+	}
 
 	fastlog.IsEnableDebugLogs = cfg.IsEnableDebugLogs
 
@@ -74,7 +77,10 @@ func (p *ParserD) Run() {
 	for {
 		p.updateCurrencyDataInStorages()
 
-		timeToNextUpdate = p.timeChecks.GetTimeToNextUpdate()
+		timeToNextUpdate, err = p.timeChecks.GetTimeToNextUpdate()
+		if err != nil {
+			fastlog.Error("cannot get time to next update", err)
+		}
 
 		fastlog.Info("next update will occur after " +
 			(*timeToNextUpdate).Round(time.Second).String())
@@ -101,9 +107,22 @@ func (p *ParserD) updateCurrencyDataInStorages() {
 		err                   error
 	)
 
-	latestUpdateDatetime, err = p.getLatestUpdateDatetime()
+	err = p.dbStorage.Connect()
 	if err != nil {
-		fastlog.Error("cannot get latest update datetime", err)
+		fastlog.Error("cannot connect to db to do data update", err)
+	}
+	defer func() {
+		err = p.dbStorage.Disconnect()
+		if err != nil {
+			fastlog.Error("cannot disconnect from db to do data update", err)
+		}
+	}()
+
+	fastlog.Info("checking latest update time...")
+
+	latestUpdateDatetime, err = p.dbStorage.GetLatestUpdateDatetime()
+	if err != nil {
+		fastlog.Error("cannot get current update datetime", err)
 	}
 
 	isNeedUpdate, err = p.timeChecks.IsNeedForUpdateDb(latestUpdateDatetime)
@@ -112,79 +131,70 @@ func (p *ParserD) updateCurrencyDataInStorages() {
 	}
 
 	if isNeedUpdate {
-		fastlog.Info("stored currency data is outdated. update is needed")
+		fastlog.Info("data is outdated")
+		fastlog.Info("initializing update process...")
 
 		latestCurrencyStorage, err = p.getParsedDataFromSource()
 		if err != nil {
 			fastlog.Error("cannot get parsed data from source", err)
 		}
 
-		latestUpdateDatetime, err = p.putDatetimeInDb(currentDatetime)
+		fastlog.Info("saving data...")
+
+		latestUpdateDatetime, err = p.dbStorage.InsertUpdateDatetime(currentDatetime)
 		if err != nil {
-			fastlog.Error("cannot put datetime in db", err)
+			fastlog.Error("cannot insert datetime into db", err)
 		}
 
-		err = p.putCurrenciesToDb(latestCurrencyStorage, latestUpdateDatetime)
+		err = p.dbStorage.InsertCurrencies(latestCurrencyStorage, latestUpdateDatetime.Id)
 		if err != nil {
-			fastlog.Error("cannot put currencies in db", err)
+			fastlog.Error("cannot insert currencies into db", err)
 		}
 	} else {
-		fastlog.Info("stored currency data is up to date. no need for update")
-
-		latestCurrencyStorage, err = p.getCurrenciesFromDb(latestUpdateDatetime)
+		latestCurrencyStorage, err = p.dbStorage.GetLatestCurrencies(latestUpdateDatetime.Id)
 		if err != nil {
-			fastlog.Error("cannot get data from db", err)
+			fastlog.Error("cannot get currencies from db", err)
 		}
 	}
 
 	p.memStorage.SetUpdateDatetime(latestUpdateDatetime)
 	p.memStorage.SetCurrencyStorage(latestCurrencyStorage)
-}
 
-func (p *ParserD) getLatestUpdateDatetime() (*models.UpdateDatetime, error) {
-	fastlog.Info("getting latest update datetime from db...")
-
-	p.connectToDb()
-	defer p.disconnectFromDb()
-
-	latestUpdateDatetime, err := p.dbStorage.GetLastDatetime()
-	if err != nil {
-		return nil, utils.DecorateError("cannot get current update datetime", err)
-	}
-
-	return latestUpdateDatetime, err
+	fastlog.Info("data is now up to date")
 }
 
 func (p *ParserD) getParsedDataFromSource() (*models.CurrencyStorage, error) {
 	var (
-		data []byte
-		err  error
+		currencyData []byte
+		err          error
 	)
 
-	fastlog.Info("initiating parsing of xml currency data...")
+	fastlog.Info("getting new data...")
 
 	if p.config.IsReadCurrencyDataFromFile {
-		fastlog.Info("getting data from local file...")
+		fastlog.Debug("getting data from local file...")
 
-		data, err = p.fsOps.GetCurrencyData()
+		currencyData, err = p.fsOps.GetCurrencyData()
 		if err != nil {
 			return nil, utils.DecorateError("cannot get currencies from file", err)
 		}
 	} else {
-		fastlog.Info("getting data from web...")
+		fastlog.Debug("getting data from web...")
 
-		data, err = p.httpClient.GetCurrencyData()
+		currencyData, err = p.httpClient.GetCurrencyData()
 		if err != nil {
 			return nil, utils.DecorateError("cannot get curencies from web", err)
 		}
 	}
 
-	err = replaceCommasWithDots(data)
+	err = replaceCommasWithDots(currencyData)
 	if err != nil {
 		return nil, utils.DecorateError("cannot replace commas in data", err)
 	}
 
-	currencyStorage, err := p.xmlParser.Parse(data)
+	fastlog.Info("parsing data...")
+
+	currencyStorage, err := p.xmlParser.Parse(currencyData)
 	if err != nil {
 		return nil, utils.DecorateError("cannot parse data", err)
 	}
@@ -212,64 +222,6 @@ func replaceCommasWithDots(data []byte) error {
 	}
 
 	return nil
-}
-
-func (p *ParserD) putDatetimeInDb(datetime string) (*models.UpdateDatetime, error) {
-	p.connectToDb()
-	defer p.disconnectFromDb()
-
-	updateDatetime, err := p.dbStorage.InsertDatetime(datetime)
-	if err != nil {
-		return nil, utils.DecorateError("cannot insert datetime into db", err)
-	}
-
-	return updateDatetime, nil
-}
-
-func (p *ParserD) putCurrenciesToDb(currencyStorage *models.CurrencyStorage, updateDatetime *models.UpdateDatetime) error {
-	fastlog.Info("putting currency data to db...")
-
-	p.connectToDb()
-	defer p.disconnectFromDb()
-
-	err := p.dbStorage.InsertCurrencies(
-		currencyStorage,
-		updateDatetime,
-	)
-	if err != nil {
-		return utils.DecorateError("cannot insert currencies into db", err)
-	}
-
-	return nil
-}
-
-func (p *ParserD) getCurrenciesFromDb(updateDatetime *models.UpdateDatetime) (*models.CurrencyStorage, error) {
-	fastlog.Info("getting latest currency data from db...")
-
-	p.connectToDb()
-	defer p.disconnectFromDb()
-
-	latestCurrencyStorage, err := p.dbStorage.GetCurrencies(
-		updateDatetime.Id)
-	if err != nil {
-		return nil, utils.DecorateError("cannot get currencies from db", err)
-	}
-
-	return latestCurrencyStorage, err
-}
-
-func (p *ParserD) connectToDb() {
-	err := p.dbStorage.Connect()
-	if err != nil {
-		fastlog.Error("cannot connect to db", err)
-	}
-}
-
-func (p *ParserD) disconnectFromDb() {
-	err := p.dbStorage.Disconnect()
-	if err != nil {
-		fastlog.Error("cannot disconnect from db", err)
-	}
 }
 
 // Prints data. For debugging purposes.
