@@ -58,6 +58,7 @@ VALUES
 INSERT INTO public.update_datetimes (id, update_datetime)
 VALUES
 (1, '2023-09-20 16:46:18');
+ALTER SEQUENCE update_datetimes_id_seq RESTART WITH 2;
 
 INSERT INTO public.currency_values (currency_value, update_datetime_id, info_num_code)
 VALUES
