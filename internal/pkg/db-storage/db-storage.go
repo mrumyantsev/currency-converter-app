@@ -59,7 +59,7 @@ func (s *DbStorage) Disconnect() error {
 	return nil
 }
 
-func (s *DbStorage) GetLastDatetime() (*models.UpdateDatetime, error) {
+func (s *DbStorage) GetLatestUpdateDatetime() (*models.UpdateDatetime, error) {
 	query := `
 		SELECT id, update_datetime
 		FROM public.update_datetimes
@@ -87,7 +87,7 @@ func (s *DbStorage) GetLastDatetime() (*models.UpdateDatetime, error) {
 	return &res, nil
 }
 
-func (s *DbStorage) InsertDatetime(datetime string) (*models.UpdateDatetime, error) {
+func (s *DbStorage) InsertUpdateDatetime(datetime string) (*models.UpdateDatetime, error) {
 	query := `
 		INSERT INTO public.update_datetimes (update_datetime)
 		VALUES
@@ -116,7 +116,7 @@ func (s *DbStorage) InsertDatetime(datetime string) (*models.UpdateDatetime, err
 	return &updateDatetime, nil
 }
 
-func (s *DbStorage) GetCurrencies(updateDatetimeId int) (*models.CurrencyStorage, error) {
+func (s *DbStorage) GetLatestCurrencies(updateDatetimeId int) (*models.CurrencyStorage, error) {
 	query := `
 		SELECT
 			public.info.num_code,
@@ -173,7 +173,7 @@ func (s *DbStorage) GetCurrencies(updateDatetimeId int) (*models.CurrencyStorage
 	return &currencyStorage, nil
 }
 
-func (s *DbStorage) InsertCurrencies(currencyStorage *models.CurrencyStorage, updateDatetime *models.UpdateDatetime) error {
+func (s *DbStorage) InsertCurrencies(currencyStorage *models.CurrencyStorage, updateDatetimeId int) error {
 	query := `
 		INSERT INTO public.currency_values
 		(currency_value, update_datetime_id, info_num_code)
@@ -204,7 +204,7 @@ func (s *DbStorage) InsertCurrencies(currencyStorage *models.CurrencyStorage, up
 	for _, currency := range currencyStorage.Currencies {
 		entries = append(entries,
 			currency.CurrencyValue,
-			updateDatetime.Id,
+			updateDatetimeId,
 			currency.NumCode,
 		)
 	}
