@@ -27,7 +27,6 @@ func New(cfg *config.Config) *XmlParser {
 }
 
 func (p *XmlParser) Parse(data []byte) (*models.CurrencyStorage, error) {
-	fastlog.Debug("begin parsing data...")
 
 	var (
 		startTime       time.Time     = time.Now()

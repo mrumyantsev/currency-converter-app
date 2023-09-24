@@ -6,7 +6,6 @@ import (
 	"github.com/mrumyantsev/currency-converter/internal/pkg/config"
 	"github.com/mrumyantsev/currency-converter/internal/pkg/models"
 	"github.com/mrumyantsev/currency-converter/internal/pkg/utils"
-	"github.com/mrumyantsev/fastlog"
 )
 
 const (
@@ -27,8 +26,6 @@ func New(cfg *config.Config) *TimeChecks {
 }
 
 func (t *TimeChecks) IsNeedForUpdateDb(updateDatetime *models.UpdateDatetime) (bool, error) {
-	fastlog.Info("checking if currency update is needed...")
-
 	latestUpdateDatetime, err := time.Parse(
 		time.RFC3339, updateDatetime.UpdateDatetime)
 	if err != nil {
@@ -53,7 +50,7 @@ func (t *TimeChecks) IsNeedForUpdateDb(updateDatetime *models.UpdateDatetime) (b
 			currentDatetime.Before(*todayUpdateDatetime))), nil
 }
 
-func (t *TimeChecks) GetTimeToNextUpdate() *time.Duration {
+func (t *TimeChecks) GetTimeToNextUpdate() (*time.Duration, error) {
 	var (
 		currentDatetime     time.Time = time.Now()
 		todayUpdateDatetime *time.Time
@@ -65,7 +62,7 @@ func (t *TimeChecks) GetTimeToNextUpdate() *time.Duration {
 
 	todayUpdateDatetime, err = t.GetDayUpdateDatetime(DAY_TODAY)
 	if err != nil {
-		fastlog.Error("cannot get today update datetime", err)
+		return nil, utils.DecorateError("cannot get today update datetime", err)
 	}
 
 	if currentDatetime.After(*todayUpdateDatetime) {
@@ -74,12 +71,12 @@ func (t *TimeChecks) GetTimeToNextUpdate() *time.Duration {
 
 	nextUpdateDatetime, err = t.GetDayUpdateDatetime(day)
 	if err != nil {
-		fastlog.Error("cannot get next update datetime", err)
+		return nil, utils.DecorateError("cannot get next update datetime", err)
 	}
 
 	timeToNextUpdate = time.Since(*nextUpdateDatetime).Abs()
 
-	return &timeToNextUpdate
+	return &timeToNextUpdate, nil
 }
 
 func (t *TimeChecks) GetDayUpdateDatetime(todayOffset int) (*time.Time, error) {
