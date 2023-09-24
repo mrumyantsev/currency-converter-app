@@ -13,7 +13,7 @@ type Config struct {
 	HttpRequestProtocol          string `envconfig:"HTTP_REQUEST_PROTOCOL" default:"HTTP/2"`
 	FakeUserAgentHeaderValue     string `envconfig:"FAKE_USER_AGENT_HEADER_VALUE" default:"Mozilla/5.0 (X11; Linux x86_64)"`
 	IsUseMultithreadedParsing    bool   `envconfig:"USE_MULTITHREADED_PARSING" default:"true"`
-	TimeWhenNeedToUpdateCurrency string `envconfig:"TIME_WHEN_NEED_TO_UPDATE_CURRENCY" default:"16:21:00"`
+	TimeWhenNeedToUpdateCurrency string `envconfig:"TIME_WHEN_NEED_TO_UPDATE_CURRENCY" default:"13:30:00"`
 
 	StorageDriver              string `envconfig:"STORAGE_DRIVER" default:"postgres"`
 	StorageConnectHostname     string `envconfig:"STORAGE_CONNECT_HOSTNAME" default:"localhost"`
