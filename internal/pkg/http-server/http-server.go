@@ -60,14 +60,14 @@ func (s *HttpServer) Run() error {
 }
 
 func (s *HttpServer) getCurrencies(w http.ResponseWriter, r *http.Request) error {
-	currencyStorage := s.memStorage.GetCurrencyStorage()
+	calculatedCurrencies := s.memStorage.GetCalculatedCurrencies()
 
-	processedData, err := json.Marshal(currencyStorage.Currencies)
+	responseBodyData, err := json.Marshal(calculatedCurrencies)
 	if err != nil {
 		return utils.DecorateError("cannot marshall curencies to json", err)
 	}
 
-	_, err = w.Write(processedData)
+	_, err = w.Write(responseBodyData)
 	if err != nil {
 		return utils.DecorateError("cannot write data to http reponse", err)
 	}

@@ -3,9 +3,11 @@ package parserd
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/mrumyantsev/currency-converter/internal/pkg/config"
+	"github.com/mrumyantsev/currency-converter/internal/pkg/consts"
 	dbstorage "github.com/mrumyantsev/currency-converter/internal/pkg/db-storage"
 	fsops "github.com/mrumyantsev/currency-converter/internal/pkg/fs-ops"
 	httpclient "github.com/mrumyantsev/currency-converter/internal/pkg/http-client"
@@ -75,7 +77,10 @@ func (p *ParserD) Run() {
 	)
 
 	for {
-		p.updateCurrencyDataInStorages()
+		err = p.updateCurrencyDataInStorages()
+		if err != nil {
+			fastlog.Error("cannot update currency data in storages", err)
+		}
 
 		timeToNextUpdate, err = p.timeChecks.GetTimeToNextUpdate()
 		if err != nil {
@@ -84,6 +89,11 @@ func (p *ParserD) Run() {
 
 		fastlog.Info("next update will occur after " +
 			(*timeToNextUpdate).Round(time.Second).String())
+
+		err = p.calculateOutputData()
+		if err != nil {
+			fastlog.Error("cannot calculate output data", err)
+		}
 
 		if !p.httpServer.GetIsRunning() {
 			go func() {
@@ -98,7 +108,7 @@ func (p *ParserD) Run() {
 	}
 }
 
-func (p *ParserD) updateCurrencyDataInStorages() {
+func (p *ParserD) updateCurrencyDataInStorages() error {
 	var (
 		latestUpdateDatetime  *models.UpdateDatetime
 		latestCurrencyStorage *models.CurrencyStorage
@@ -109,25 +119,19 @@ func (p *ParserD) updateCurrencyDataInStorages() {
 
 	err = p.dbStorage.Connect()
 	if err != nil {
-		fastlog.Error("cannot connect to db to do data update", err)
+		return utils.DecorateError("cannot connect to db to do data update", err)
 	}
-	defer func() {
-		err = p.dbStorage.Disconnect()
-		if err != nil {
-			fastlog.Error("cannot disconnect from db to do data update", err)
-		}
-	}()
 
-	fastlog.Info("checking latest update time...")
+	fastlog.Info("checking latest update datetime...")
 
 	latestUpdateDatetime, err = p.dbStorage.GetLatestUpdateDatetime()
 	if err != nil {
-		fastlog.Error("cannot get current update datetime", err)
+		return utils.DecorateError("cannot get current update datetime", err)
 	}
 
 	isNeedUpdate, err = p.timeChecks.IsNeedForUpdateDb(latestUpdateDatetime)
 	if err != nil {
-		fastlog.Error("cannot check is need update for db or not", err)
+		return utils.DecorateError("cannot check is need update for db or not", err)
 	}
 
 	if isNeedUpdate {
@@ -136,24 +140,24 @@ func (p *ParserD) updateCurrencyDataInStorages() {
 
 		latestCurrencyStorage, err = p.getParsedDataFromSource()
 		if err != nil {
-			fastlog.Error("cannot get parsed data from source", err)
+			return utils.DecorateError("cannot get parsed data from source", err)
 		}
 
 		fastlog.Info("saving data...")
 
 		latestUpdateDatetime, err = p.dbStorage.InsertUpdateDatetime(currentDatetime)
 		if err != nil {
-			fastlog.Error("cannot insert datetime into db", err)
+			return utils.DecorateError("cannot insert datetime into db", err)
 		}
 
 		err = p.dbStorage.InsertCurrencies(latestCurrencyStorage, latestUpdateDatetime.Id)
 		if err != nil {
-			fastlog.Error("cannot insert currencies into db", err)
+			return utils.DecorateError("cannot insert currencies into db", err)
 		}
 	} else {
 		latestCurrencyStorage, err = p.dbStorage.GetLatestCurrencies(latestUpdateDatetime.Id)
 		if err != nil {
-			fastlog.Error("cannot get currencies from db", err)
+			return utils.DecorateError("cannot get currencies from db", err)
 		}
 	}
 
@@ -161,6 +165,13 @@ func (p *ParserD) updateCurrencyDataInStorages() {
 	p.memStorage.SetCurrencyStorage(latestCurrencyStorage)
 
 	fastlog.Info("data is now up to date")
+
+	err = p.dbStorage.Disconnect()
+	if err != nil {
+		return utils.DecorateError("cannot disconnect from db to do data update", err)
+	}
+
+	return nil
 }
 
 func (p *ParserD) getParsedDataFromSource() (*models.CurrencyStorage, error) {
@@ -222,6 +233,73 @@ func replaceCommasWithDots(data []byte) error {
 	}
 
 	return nil
+}
+
+func (p *ParserD) calculateOutputData() error {
+	var (
+		currencyStorage      *models.CurrencyStorage     = p.memStorage.GetCurrencyStorage()
+		calculatedCurrencies []models.CalculatedCurrency = make(
+			[]models.CalculatedCurrency,
+			consts.LENGTH_OF_CURRENCIES_SCLICE_INITIAL,
+			len(currencyStorage.Currencies),
+		)
+		calculatedCurrency models.CalculatedCurrency
+		ratio              *string
+		err                error
+	)
+
+	fastlog.Info("calculate output data...")
+
+	for _, currency := range currencyStorage.Currencies {
+		ratio, err = calculateRatio(&currency.CurrencyValue, &currency.Multiplier)
+		if err != nil {
+			return utils.DecorateError("cannot calculate currency rate", err)
+		}
+
+		calculatedCurrency.Name = currency.Name
+		calculatedCurrency.CharCode = currency.CharCode
+		calculatedCurrency.Ratio = *ratio
+
+		calculatedCurrencies = append(calculatedCurrencies, calculatedCurrency)
+	}
+
+	p.memStorage.SetCalculatedCurrency(calculatedCurrencies)
+
+	return nil
+}
+
+func calculateRatio(currencyValue *string, currencyMultiplier *int) (*string, error) {
+	const (
+		FLOAT_BIT_SIZE          int  = 64
+		FLOAT_COMMON_FORMAT     byte = 'f'
+		FLOAT_MAXIMUM_PRECISION int  = -1
+	)
+
+	var (
+		value      float64
+		multiplier float64
+		result     float64
+		output     string
+		err        error
+	)
+
+	value, err = strconv.ParseFloat(*currencyValue, FLOAT_BIT_SIZE)
+	if err != nil {
+		return nil, utils.DecorateError("cannot parse string to float", err)
+	}
+
+	multiplier = float64(*currencyMultiplier)
+
+	result = 1 / (value / multiplier)
+
+	output = strconv.FormatFloat(
+		result,
+		FLOAT_COMMON_FORMAT,
+		FLOAT_MAXIMUM_PRECISION,
+		FLOAT_BIT_SIZE,
+	)
+
+	return &output, nil
 }
 
 // Prints data. For debugging purposes.

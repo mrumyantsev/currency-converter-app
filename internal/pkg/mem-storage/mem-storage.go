@@ -3,8 +3,9 @@ package memstorage
 import "github.com/mrumyantsev/currency-converter/internal/pkg/models"
 
 type MemStorage struct {
-	currencyStorage *models.CurrencyStorage
-	updateDatetime  *models.UpdateDatetime
+	currencyStorage      *models.CurrencyStorage
+	updateDatetime       *models.UpdateDatetime
+	calculatedCurrencies []models.CalculatedCurrency
 }
 
 func New() *MemStorage {
@@ -25,4 +26,12 @@ func (s *MemStorage) GetUpdateDatetime() *models.UpdateDatetime {
 
 func (s *MemStorage) SetUpdateDatetime(updateDatetime *models.UpdateDatetime) {
 	s.updateDatetime = updateDatetime
+}
+
+func (s *MemStorage) GetCalculatedCurrencies() []models.CalculatedCurrency {
+	return s.calculatedCurrencies
+}
+
+func (s *MemStorage) SetCalculatedCurrency(calculatedCurrencies []models.CalculatedCurrency) {
+	s.calculatedCurrencies = calculatedCurrencies
 }

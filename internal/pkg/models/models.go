@@ -3,19 +3,25 @@ package models
 import "encoding/xml"
 
 type CurrencyStorage struct {
-	XMLName    xml.Name   `xml:"ValCurs" json:"currencyStorage"`
-	Currencies []Currency `xml:"Valute" json:"currencies"`
+	XMLName    xml.Name   `xml:"ValCurs"`
+	Currencies []Currency `xml:"Valute"`
 }
 
 type Currency struct {
-	NumCode       int    `xml:"NumCode" json:"numCode"`
-	CharCode      string `xml:"CharCode" json:"charCode"`
-	Multiplier    int    `xml:"Nominal" json:"multiplier"`
-	Name          string `xml:"Name" json:"name"`
-	CurrencyValue string `xml:"Value" json:"currencyValue"`
+	NumCode       int    `xml:"NumCode"`
+	CharCode      string `xml:"CharCode"`
+	Multiplier    int    `xml:"Nominal"`
+	Name          string `xml:"Name"`
+	CurrencyValue string `xml:"Value"`
 }
 
 type UpdateDatetime struct {
 	Id             int    `sql:"id"`
 	UpdateDatetime string `sql:"update_datetime"`
+}
+
+type CalculatedCurrency struct {
+	Name     string `json:"name"`
+	CharCode string `json:"charCode"`
+	Ratio    string `json:"ratio"`
 }
