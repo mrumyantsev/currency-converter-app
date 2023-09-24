@@ -5,8 +5,7 @@ import (
 	"os"
 
 	"github.com/mrumyantsev/currency-converter/internal/pkg/config"
-
-	"github.com/mrumyantsev/fastlog"
+	"github.com/mrumyantsev/currency-converter/internal/pkg/utils"
 )
 
 type FsOps struct {
@@ -19,26 +18,26 @@ func New(cfg *config.Config) *FsOps {
 	}
 }
 
-func (f *FsOps) GetCurrencyData() []byte {
-	fastlog.Debug("getting data from local file")
-
+func (f *FsOps) GetCurrencyData() ([]byte, error) {
 	file, err := os.Open(f.config.CurrencySourceFile)
 	if err != nil {
-		fastlog.Fatal("cannot open file", err)
+		return nil, utils.DecorateError("cannot open file", err)
 	}
 	defer file.Close()
 
 	data, err := io.ReadAll(file)
 	if err != nil {
-		fastlog.Fatal("cannot read all data from file", err)
+		return nil, utils.DecorateError("cannot read all data from file", err)
 	}
 
-	return data
+	return data, nil
 }
 
-func (f *FsOps) OverwriteCurrencyDataFile(data []byte) {
+func (f *FsOps) OverwriteCurrencyDataFile(data []byte) error {
 	err := os.WriteFile(f.config.CurrencySourceFile, data, 0644)
 	if err != nil {
-		fastlog.Fatal("cannot write file", err)
+		return utils.DecorateError("cannot write file", err)
 	}
+
+	return nil
 }

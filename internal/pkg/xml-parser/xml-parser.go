@@ -10,6 +10,7 @@ import (
 	"github.com/mrumyantsev/currency-converter/internal/pkg/config"
 	"github.com/mrumyantsev/currency-converter/internal/pkg/consts"
 	"github.com/mrumyantsev/currency-converter/internal/pkg/models"
+	"github.com/mrumyantsev/currency-converter/internal/pkg/utils"
 
 	"github.com/mrumyantsev/fastlog"
 	"golang.org/x/net/html/charset"
@@ -25,7 +26,7 @@ func New(cfg *config.Config) *XmlParser {
 	}
 }
 
-func (p *XmlParser) Parse(data []byte) *models.CurrencyStorage {
+func (p *XmlParser) Parse(data []byte) (*models.CurrencyStorage, error) {
 	fastlog.Debug("begin parsing data...")
 
 	var (
@@ -33,26 +34,35 @@ func (p *XmlParser) Parse(data []byte) *models.CurrencyStorage {
 		buffer          *bytes.Buffer = bytes.NewBuffer(data)
 		decoder         *xml.Decoder  = xml.NewDecoder(buffer)
 		currencyStorage *models.CurrencyStorage
+		err             error
 	)
 
 	decoder.CharsetReader = charset.NewReaderLabel
 
 	if p.config.IsUseMultithreadedParsing {
 		fastlog.Debug("using multithreaded parsing")
-		currencyStorage = p.getParsedDataMultiThreaded(decoder)
+
+		currencyStorage, err = p.getParsedDataMultiThreaded(decoder)
+		if err != nil {
+			return nil, utils.DecorateError("cannot do multithreaded parsing", err)
+		}
 	} else {
 		fastlog.Debug("using singlethreaded parsing")
-		currencyStorage = p.getParsedDataSingleThreaded(decoder)
+
+		currencyStorage, err = p.getParsedDataSingleThreaded(decoder)
+		if err != nil {
+			return nil, utils.DecorateError("cannot do singlethreaded parsing", err)
+		}
 	}
 
 	elapsedTime := time.Since(startTime)
 
 	fastlog.Debug(fmt.Sprintf("parsing time overall: %s", elapsedTime))
 
-	return currencyStorage
+	return currencyStorage, nil
 }
 
-func (p *XmlParser) getParsedDataMultiThreaded(decoder *xml.Decoder) *models.CurrencyStorage {
+func (p *XmlParser) getParsedDataMultiThreaded(decoder *xml.Decoder) (*models.CurrencyStorage, error) {
 	const (
 		CURRENCY_START_ELEMENT_NAME string = "Valute"
 	)
@@ -61,8 +71,8 @@ func (p *XmlParser) getParsedDataMultiThreaded(decoder *xml.Decoder) *models.Cur
 		currencyStorage models.CurrencyStorage = models.CurrencyStorage{
 			Currencies: make(
 				[]models.Currency,
-				consts.LEN_OF_CURRENCIES_SCLICE_INITIAL,
-				consts.CAP_OF_CURRENCIES_SCLICE_INITIAL,
+				consts.LENGTH_OF_CURRENCIES_SCLICE_INITIAL,
+				consts.CAPACITY_OF_CURRENCIES_SCLICE_INITIAL,
 			),
 		}
 		currency     models.Currency
@@ -79,7 +89,7 @@ func (p *XmlParser) getParsedDataMultiThreaded(decoder *xml.Decoder) *models.Cur
 				break
 			}
 
-			fastlog.Fatal("cannot decode xml element", err)
+			return nil, utils.DecorateError("cannot decode xml element", err)
 		}
 
 		if token == nil {
@@ -97,16 +107,16 @@ func (p *XmlParser) getParsedDataMultiThreaded(decoder *xml.Decoder) *models.Cur
 		}
 	}
 
-	return &currencyStorage
+	return &currencyStorage, nil
 }
 
-func (p *XmlParser) getParsedDataSingleThreaded(decoder *xml.Decoder) *models.CurrencyStorage {
+func (p *XmlParser) getParsedDataSingleThreaded(decoder *xml.Decoder) (*models.CurrencyStorage, error) {
 	var (
 		currencyStorage models.CurrencyStorage = models.CurrencyStorage{
 			Currencies: make(
 				[]models.Currency,
-				consts.LEN_OF_CURRENCIES_SCLICE_INITIAL,
-				consts.CAP_OF_CURRENCIES_SCLICE_INITIAL,
+				consts.LENGTH_OF_CURRENCIES_SCLICE_INITIAL,
+				consts.CAPACITY_OF_CURRENCIES_SCLICE_INITIAL,
 			),
 		}
 		err error
@@ -114,8 +124,8 @@ func (p *XmlParser) getParsedDataSingleThreaded(decoder *xml.Decoder) *models.Cu
 
 	err = decoder.Decode(&currencyStorage)
 	if err != nil {
-		fastlog.Fatal("cannot decode xml data", err)
+		return nil, utils.DecorateError("cannot decode xml data", err)
 	}
 
-	return &currencyStorage
+	return &currencyStorage, nil
 }

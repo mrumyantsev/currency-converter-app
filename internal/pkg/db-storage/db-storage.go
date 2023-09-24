@@ -1,4 +1,4 @@
-package storage
+package dbstorage
 
 import (
 	"database/sql"
@@ -10,16 +10,15 @@ import (
 	"github.com/mrumyantsev/currency-converter/internal/pkg/utils"
 
 	_ "github.com/lib/pq"
-	"github.com/mrumyantsev/fastlog"
 )
 
-type Storage struct {
+type DbStorage struct {
 	config *config.Config
 	conn   *sql.DB
 }
 
-func New(cfg *config.Config) *Storage {
-	storage := &Storage{
+func New(cfg *config.Config) *DbStorage {
+	storage := &DbStorage{
 		config: cfg,
 	}
 
@@ -27,7 +26,7 @@ func New(cfg *config.Config) *Storage {
 }
 
 // Connects to database.
-func (s *Storage) Connect() error {
+func (s *DbStorage) Connect() error {
 	var (
 		psqlInfo = fmt.Sprintf("host=%s port=%s user=%s "+
 			"password=%s dbname=%s sslmode=%s",
@@ -44,27 +43,23 @@ func (s *Storage) Connect() error {
 
 	s.conn, err = sql.Open(s.config.StorageDriver, psqlInfo)
 	if err != nil {
-		fastlog.Fatal("cannot connect to db", err)
+		return utils.DecorateError("cannot connect to db", err)
 	}
-
-	fastlog.Debug("openning db connection")
 
 	return nil
 }
 
 // Disconnects from database.
-func (s *Storage) Disconnect() error {
+func (s *DbStorage) Disconnect() error {
 	err := s.conn.Close()
 	if err != nil {
-		fastlog.Fatal("cannot disconnect from db", err)
+		return utils.DecorateError("cannot disconnect from db", err)
 	}
-
-	fastlog.Debug("closing db connection")
 
 	return nil
 }
 
-func (s *Storage) GetLastDatetime() (*models.UpdateDatetime, error) {
+func (s *DbStorage) GetLastDatetime() (*models.UpdateDatetime, error) {
 	query := `
 		SELECT id, update_datetime
 		FROM public.update_datetimes
@@ -92,7 +87,7 @@ func (s *Storage) GetLastDatetime() (*models.UpdateDatetime, error) {
 	return &res, nil
 }
 
-func (s *Storage) InsertDatetime(datetime string) (*int, error) {
+func (s *DbStorage) InsertDatetime(datetime string) (*models.UpdateDatetime, error) {
 	query := `
 		INSERT INTO public.update_datetimes (update_datetime)
 		VALUES
@@ -110,14 +105,18 @@ func (s *Storage) InsertDatetime(datetime string) (*int, error) {
 		return nil, utils.DecorateError("cannot execute inserting state of datetime", err)
 	}
 
-	var id int
+	var (
+		updateDatetime models.UpdateDatetime = models.UpdateDatetime{
+			UpdateDatetime: datetime,
+		}
+	)
 
-	row.Scan(&id)
+	row.Scan(&updateDatetime.Id)
 
-	return &id, nil
+	return &updateDatetime, nil
 }
 
-func (s *Storage) GetCurrencies(updateDatetimeId int) (*models.CurrencyStorage, error) {
+func (s *DbStorage) GetCurrencies(updateDatetimeId int) (*models.CurrencyStorage, error) {
 	query := `
 		SELECT
 			public.info.num_code,
@@ -131,7 +130,7 @@ func (s *Storage) GetCurrencies(updateDatetimeId int) (*models.CurrencyStorage, 
 		JOIN public.currency_values
 		  ON public.info.num_code = public.currency_values.info_num_code
 		WHERE public.currency_values.update_datetime_id = $1
-		ORDER BY public.info.num_code;
+		ORDER BY public.info.name;
 	`
 
 	stmt, err := s.conn.Prepare(query)
@@ -149,8 +148,8 @@ func (s *Storage) GetCurrencies(updateDatetimeId int) (*models.CurrencyStorage, 
 		currencyStorage models.CurrencyStorage = models.CurrencyStorage{
 			Currencies: make(
 				[]models.Currency,
-				consts.LEN_OF_CURRENCIES_SCLICE_INITIAL,
-				consts.CAP_OF_CURRENCIES_SCLICE_INITIAL,
+				consts.LENGTH_OF_CURRENCIES_SCLICE_INITIAL,
+				consts.CAPACITY_OF_CURRENCIES_SCLICE_INITIAL,
 			),
 		}
 		currency models.Currency
@@ -174,7 +173,7 @@ func (s *Storage) GetCurrencies(updateDatetimeId int) (*models.CurrencyStorage, 
 	return &currencyStorage, nil
 }
 
-func (s *Storage) InsertCurrencies(currencyStorage *models.CurrencyStorage, updateDatetimeId int) error {
+func (s *DbStorage) InsertCurrencies(currencyStorage *models.CurrencyStorage, updateDatetime *models.UpdateDatetime) error {
 	query := `
 		INSERT INTO public.currency_values
 		(currency_value, update_datetime_id, info_num_code)
@@ -182,11 +181,13 @@ func (s *Storage) InsertCurrencies(currencyStorage *models.CurrencyStorage, upda
 		($1,$2,$3)
 	`
 
+	currenciesLength := len(currencyStorage.Currencies)
+
 	extendCurrenciesQuery(
 		&query,
 		4, // it is means next placeholder: $4
 		0,
-		len(currencyStorage.Currencies)-1,
+		currenciesLength-1,
 	)
 
 	query += ";"
@@ -196,9 +197,19 @@ func (s *Storage) InsertCurrencies(currencyStorage *models.CurrencyStorage, upda
 		return utils.DecorateError("cannot prepare statement for inserting currencies", err)
 	}
 
-	// new struct ?
+	var (
+		entries = []interface{}{}
+	)
 
-	_, err = stmt.Exec()
+	for _, currency := range currencyStorage.Currencies {
+		entries = append(entries,
+			currency.CurrencyValue,
+			updateDatetime.Id,
+			currency.NumCode,
+		)
+	}
+
+	_, err = stmt.Exec(entries...)
 	if err != nil {
 		return utils.DecorateError("cannot execute inserting of currencies", err)
 	}

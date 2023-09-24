@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/mrumyantsev/currency-converter/internal/pkg/config"
+	"github.com/mrumyantsev/currency-converter/internal/pkg/utils"
 
 	"github.com/mrumyantsev/fastlog"
 )
@@ -30,26 +31,24 @@ func New(cfg *config.Config) *HttpClient {
 	return httpClient
 }
 
-func (c *HttpClient) GetCurrencyData() []byte {
-	fastlog.Debug("begin http data retrieving...")
-
+func (c *HttpClient) GetCurrencyData() ([]byte, error) {
 	startTime := time.Now()
 
 	url, err := url.Parse(c.config.CurrencySourceUrl)
 	if err != nil {
-		fastlog.Fatal("cannot parse url", err)
+		return nil, utils.DecorateError("cannot parse url", err)
 	}
 
 	requ := c.createRequest(url)
 
 	resp, err := c.client.Do(requ)
 	if err != nil {
-		fastlog.Fatal("cannot send request to server", err)
+		return nil, utils.DecorateError("cannot send request to server", err)
 	}
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fastlog.Fatal("cannot read data from response body", err)
+		return nil, utils.DecorateError("cannot read data from response body", err)
 	}
 	defer resp.Body.Close()
 
@@ -57,11 +56,11 @@ func (c *HttpClient) GetCurrencyData() []byte {
 
 	fastlog.Debug(fmt.Sprintf("getting http data time overall: %s", elapsedTime))
 
-	return data
+	return data, nil
 }
 
 func (c *HttpClient) createRequest(url *url.URL) *http.Request {
-	fastlog.Debug(fmt.Sprintf("using %s request protocol", c.config.HttpRequestProtocol))
+	fastlog.Debug(fmt.Sprintf("using %s protocol in request", c.config.HttpRequestProtocol))
 	fastlog.Debug(fmt.Sprintf("using user-agent header: %s", c.config.FakeUserAgentHeaderValue))
 
 	return &http.Request{
