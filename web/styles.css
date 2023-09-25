@@ -29,3 +29,15 @@
 #info-container {
     margin-left: 28px;
 }
+
+.dropdown-menu {
+    margin-left: 15px;
+    overflow: hidden;
+    overflow-y: auto;
+    max-height: calc(100vh - 100px);
+}
+
+.dropdown-item {
+    text-indent: 1em;
+    padding-right: 2em;
+}
