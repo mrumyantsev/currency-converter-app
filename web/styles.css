@@ -25,3 +25,7 @@
 #result {
     pointer-events: none;
 }
+
+#info-container {
+    margin-left: 28px;
+}

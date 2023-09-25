@@ -1,5 +1,6 @@
 const serverUrl = "http://127.0.0.1:8080/currencies.json";
 const dataUpdateIntervalMilliseconds = 300000;
+const decimalDigitsInResultValue = 4;
 
 const leftCurrencyButton = $("#left-currency-button");
 const leftCurrencyList = $("#left-currency-list");
@@ -40,17 +41,15 @@ const updateDataFromServer = () => {
 
     if (!data) {
         info.text("server is not responding");
+    } else {
+        info.text("");
     }
 
-    info.text("");
-
-    data.unshift(rubleCurrency);
-
-    storedData = data;
-
-    if (!storedData) {
+    if (!data && !storedData) {
         return;
     }
+
+    data.unshift(rubleCurrency);
 
     if (isFirstTimeGetUpdated) {
         initPageElements(data);
@@ -58,39 +57,9 @@ const updateDataFromServer = () => {
         isFirstTimeGetUpdated = false;
     }
 
-    initClicksListener();
-}
+    initClicksListener(data);
 
-const initPageElements = (data) => {
-    const firstElement = data[0];
-    const secondElement = data[1];
-
-    leftCurrencyButton.text(firstElement.name);
-    rightCurrencyButton.text(secondElement.name);
-    
-    leftRatio = firstElement.ratio;
-    rightRatio = secondElement.ratio;
-
-    calculateResult();
-
-    fillList(leftCurrencyList, leftCurrencySide, data);
-    fillList(rightCurrencyList, rightCurrencySide, data);
-}
-
-const initClicksListener = () => {
-    $(".dropdown-item").on("click", () => {
-        const currency = storedData[index];
-
-        if (side === leftCurrencySide) {
-            leftRatio = parseFloat(currency.ratio);
-            leftCurrencyButton.text(currency.name);
-        } else {
-            rightRatio = parseFloat(currency.ratio);
-            rightCurrencyButton.text(currency.name);
-        }
-
-        calculateResult();
-    });
+    storedData = data;
 }
 
 const getDataFromServer = (url) => {
@@ -112,6 +81,24 @@ const getDataFromServer = (url) => {
     return result;
 }
 
+const initPageElements = (data) => {
+    const firstCurrency = data[0];
+    const secondCurrency = data[1];
+
+    leftCurrencyButton.text(
+        getExtendedCurrencyName(firstCurrency));
+    rightCurrencyButton.text(
+        getExtendedCurrencyName(secondCurrency));
+    
+    leftRatio = firstCurrency.ratio;
+    rightRatio = secondCurrency.ratio;
+
+    calculateResult();
+
+    fillList(leftCurrencyList, leftCurrencySide, data);
+    fillList(rightCurrencyList, rightCurrencySide, data);
+}
+
 const fillList = (list, side, data) => {
     const divider = "<li><hr class=\"dropdown-divider\"></li>";
 
@@ -126,8 +113,11 @@ const fillList = (list, side, data) => {
 
         currency = data[i];
 
-        element = "<li><a class=\"dropdown-item\" href=\"#\" onclick=\"side=" +
-            side + ";index=" + i + ";\">"  + currency.name + "</a></li>";
+        element =
+            "<li><a class=\"dropdown-item\" href=\"#\" onclick=\"side=" +
+            side + ";index=" + i + ";\">" +
+            getExtendedCurrencyName(currency) +
+            "</a></li>";
 
         list.append(element);
 
@@ -135,10 +125,33 @@ const fillList = (list, side, data) => {
     }
 }
 
+const initClicksListener = (data) => {
+    $(".dropdown-item").on("click", () => {
+        const currency = data[index];
+        const currencyNameWithCharCode =
+            getExtendedCurrencyName(currency);
+
+        if (side === leftCurrencySide) {
+            leftRatio = parseFloat(currency.ratio);
+            leftCurrencyButton.text(currencyNameWithCharCode);
+        } else {
+            rightRatio = parseFloat(currency.ratio);
+            rightCurrencyButton.text(currencyNameWithCharCode);
+        }
+
+        calculateResult();
+    });
+}
+
 const calculateResult = () => {
     const ratio = rightRatio / leftRatio;
 
-    result.text(ratio.toFixed(4).toString());
+    result.text(
+        ratio.toFixed(decimalDigitsInResultValue).toString());
+}
+
+const getExtendedCurrencyName = (currency) => {
+    return currency.name + " (" + currency.charCode + ")";
 }
 
 main();
