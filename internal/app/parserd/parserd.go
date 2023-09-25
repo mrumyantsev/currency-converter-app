@@ -154,11 +154,11 @@ func (p *ParserD) updateCurrencyDataInStorages() error {
 		if err != nil {
 			return utils.DecorateError("cannot insert currencies into db", err)
 		}
-	} else {
-		latestCurrencyStorage, err = p.dbStorage.GetLatestCurrencies(latestUpdateDatetime.Id)
-		if err != nil {
-			return utils.DecorateError("cannot get currencies from db", err)
-		}
+	}
+
+	latestCurrencyStorage, err = p.dbStorage.GetLatestCurrencies(latestUpdateDatetime.Id)
+	if err != nil {
+		return utils.DecorateError("cannot get currencies from db", err)
 	}
 
 	p.memStorage.SetUpdateDatetime(latestUpdateDatetime)
