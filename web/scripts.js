@@ -114,7 +114,7 @@ const fillList = (list, side, data) => {
         currency = data[i];
 
         element =
-            "<li><a class=\"dropdown-item\" href=\"#\" onclick=\"side=" +
+            "<li><a class=\"dropdown-item\" onclick=\"side=" +
             side + ";index=" + i + ";\">" +
             getExtendedCurrencyName(currency) +
             "</a></li>";
