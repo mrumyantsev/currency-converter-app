@@ -1,0 +1,27 @@
+* {
+    -youbkit-touch-callout: none;
+    -youbkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.navbar .navbar-brand {
+    margin-left: 23px;
+}
+
+.nav-item .dropdown, ul .navbar-nav {
+    display: inline;
+}
+
+.btn {
+    margin-left: 15px;
+}
+
+#right-currency-button, #left-currency-button, .dropdown-item {
+    cursor: default;
+}
+
+#result {
+    pointer-events: none;
+}
