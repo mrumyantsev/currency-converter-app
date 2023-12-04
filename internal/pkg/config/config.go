@@ -15,16 +15,13 @@ type Config struct {
 	IsUseMultithreadedParsing    bool   `envconfig:"USE_MULTITHREADED_PARSING" default:"true"`
 	TimeWhenNeedToUpdateCurrency string `envconfig:"TIME_WHEN_NEED_TO_UPDATE_CURRENCY" default:"13:30:00"`
 
-	StorageDriver              string `envconfig:"STORAGE_DRIVER" default:"postgres"`
-	StorageHostname            string `envconfig:"STORAGE_HOSTNAME" default:"localhost"`
-	StoragePort                string `envconfig:"STORAGE_PORT" default:"5432"`
-	StorageUser                string `envconfig:"STORAGE_USER" default:"postgres"`
-	StoragePassword            string `envconfig:"STORAGE_PASSWORD" default:""`
-	StorageDatabaseName        string `envconfig:"STORAGE_DATABASE_NAME" default:"currency_storage"`
-	StorageReadTimeoutSeconds  string `envconfig:"STORAGE_READ_TIMEOUT_SECONDS" default:"10"`
-	StorageWriteTimeoutSeconds string `envconfig:"STORAGE_WRITE_TIMEOUT_SECONDS" default:"20"`
-	StorageMigrationDir        string `envconfig:"STORAGE_MIGRATION_DIR" default:"./test/"`
-	StorageSSLMode             string `envconfig:"STORAGE_SSL_MODE" default:"disable"`
+	StorageDriver       string `envconfig:"STORAGE_DRIVER" default:"postgres"`
+	StorageHostname     string `envconfig:"STORAGE_HOSTNAME" default:"localhost"`
+	StoragePort         string `envconfig:"STORAGE_PORT" default:"5432"`
+	StorageUser         string `envconfig:"STORAGE_USER" default:"postgres"`
+	StoragePassword     string `envconfig:"STORAGE_PASSWORD" default:""`
+	StorageDatabaseName string `envconfig:"STORAGE_DATABASE_NAME" default:"currency_storage"`
+	StorageSSLMode      string `envconfig:"STORAGE_SSL_MODE" default:"disable"`
 
 	HttpServerListenIp   string `envconfig:"HTTP_SERVER_LISTEN_IP" default:"0.0.0.0"`
 	HttpServerListenPort string `envconfig:"HTTP_SERVER_LISTEN_PORT" default:"8080"`
