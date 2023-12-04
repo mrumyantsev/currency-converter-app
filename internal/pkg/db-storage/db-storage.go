@@ -30,10 +30,10 @@ func (s *DbStorage) Connect() error {
 	var (
 		psqlInfo = fmt.Sprintf("host=%s port=%s user=%s "+
 			"password=%s dbname=%s sslmode=%s",
-			s.config.StorageConnectHostname,
-			s.config.StorageConnectPort,
-			s.config.StorageConnectUser,
-			s.config.StorageConnectPassword,
+			s.config.StorageHostname,
+			s.config.StoragePort,
+			s.config.StorageUser,
+			s.config.StoragePassword,
 			s.config.StorageDatabaseName,
 			s.config.StorageSSLMode,
 		)

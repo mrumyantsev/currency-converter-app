@@ -16,10 +16,10 @@ type Config struct {
 	TimeWhenNeedToUpdateCurrency string `envconfig:"TIME_WHEN_NEED_TO_UPDATE_CURRENCY" default:"13:30:00"`
 
 	StorageDriver              string `envconfig:"STORAGE_DRIVER" default:"postgres"`
-	StorageConnectHostname     string `envconfig:"STORAGE_CONNECT_HOSTNAME" default:"localhost"`
-	StorageConnectPort         string `envconfig:"STORAGE_CONNECT_PORT" default:"5432"`
-	StorageConnectUser         string `envconfig:"STORAGE_CONNECT_USER" default:"postgres"`
-	StorageConnectPassword     string `envconfig:"STORAGE_CONNECT_PASSWORD" default:""`
+	StorageHostname            string `envconfig:"STORAGE_HOSTNAME" default:"localhost"`
+	StoragePort                string `envconfig:"STORAGE_PORT" default:"5432"`
+	StorageUser                string `envconfig:"STORAGE_USER" default:"postgres"`
+	StoragePassword            string `envconfig:"STORAGE_PASSWORD" default:""`
 	StorageDatabaseName        string `envconfig:"STORAGE_DATABASE_NAME" default:"currency_storage"`
 	StorageReadTimeoutSeconds  string `envconfig:"STORAGE_READ_TIMEOUT_SECONDS" default:"10"`
 	StorageWriteTimeoutSeconds string `envconfig:"STORAGE_WRITE_TIMEOUT_SECONDS" default:"20"`
