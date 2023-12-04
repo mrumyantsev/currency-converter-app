@@ -3,16 +3,16 @@ package main
 import (
 	"os"
 
-	"github.com/mrumyantsev/currency-converter/internal/app/parserd"
+	"github.com/mrumyantsev/currency-converter/internal/app/server"
 )
 
 func main() {
-	parserD := parserd.New()
+	server := server.New()
 
 	if isGotSecondArg("--save") {
-		parserD.SaveCurrencyDataToFile()
+		server.SaveCurrencyDataToFile()
 	} else {
-		parserD.Run()
+		server.Run()
 	}
 }
 
