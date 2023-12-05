@@ -1,0 +1,9 @@
+FROM alpine:latest
+
+RUN apk update && \
+    apk add lighttpd && \
+    rm -rf /var/cache/apk/*
+
+COPY ./web/* /var/www/localhost/htdocs
+
+ENTRYPOINT [ "lighttpd", "-D", "-f", "/etc/lighttpd/lighttpd.conf" ]

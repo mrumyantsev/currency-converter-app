@@ -1,0 +1,54 @@
+version: '3'
+
+services:
+  db:
+    container_name: cc-db
+    hostname: cc-db
+    restart: always
+    image: postgres:16.1-alpine3.18
+    environment:
+      - DATABASE_HOST=${DBHOST}
+      - POSTGRES_USER=${DBUSER}
+      - POSTGRES_PASSWORD=${DBPASS}
+      - POSTGRES_DB=${DBDB}
+    volumes:
+      - ./db:/var/lib/postgresql/data
+    networks:
+      - mynet
+    ports:
+      - 5432:5432
+
+  server:
+    container_name: cc-server
+    hostname: cc-server
+    restart: on-failure
+    depends_on:
+      - db
+    build:
+      dockerfile: ./Dockerfile.server
+    environment:
+      - STORAGE_HOSTNAME=${DBHOST}
+      - STORAGE_USER=${DBUSER}
+      - STORAGE_PASSWORD=${DBPASS}
+      - STORAGE_DATABASE=${DBDB}
+    networks:
+      - mynet
+    ports:
+      - 8080:8080
+  
+  web:
+    container_name: cc-web
+    hostname: cc-web
+    restart: on-failure
+    depends_on:
+      - server
+    build:
+      dockerfile: ./Dockerfile.web
+    networks:
+      - mynet
+    ports:
+      - 5555:80
+
+networks:
+  mynet:
+    driver: bridge
