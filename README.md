@@ -1,17 +1,35 @@
-Currency Converter — это приложение, позволяющее получать данные об иностранных валютах, сохранять их базу (для возможного построения статистики), и конвертировать из одной в другую, используя удобный веб-интерфейс. Данные о валютах берутся из государственных источников страны РФ. Они форматируются из одного формата в другой, более подходящий для работы клиентской части. За обновлением данных следит внутренний планировщик, который запускает обновление из источников каждый день в указанное время (по умолчанию 13:30) или, если время спустя последнее обновление превышает 24 часа. Данные из открытых источников обновляются раз в сутки, так что можно настроить желаемое время их получения.
+# Currency Converter
 
-Существует возможность сохранить данные, получаемые из сети в файл на диске (или указать файл, как источник данных, для обновления). Сохранение в файл производится командой `server --save`. Для запуска приложения в режиме парсера-сервера параметры не указываются.
+This application allows you to receive data on foreign currencies, save their database (for possible construction of statistics) and convert from one to another using a convenient web interface. Data on currencies is taken from government sources of the Russian Federation.
 
-Клиентский код приложения не производит сортировку данных (они приходят к нему уже отсортированными). Он также следит за обновлениями и проверяет, доступен ли сервер для получения данных. По умолчанию запрос к серверу повторяется каждые 5 минут. Выбрав обе валюты на странице веб-приложения результат отношения 1 единицы валюты справа к 1 единице валюты слева автоматически будет выведен в зеленой рамке.
+![Web application](./web-app.png)
+*Web application view in a browser*
 
-![Screenshot](./screenshot.png)
+# Usage
 
-*Вид приложения в браузере*
+Use **Docker Compose** to deploy the project:
 
-![Console](./console.png)
+```
+docker compose up
+```
 
-*Логи в консоли серверного приложения*
+# Saving to a File
 
-![Database Schema](./schema/database_schema.png)
+It is possible to save data received from the network to a file on disk (or specify the file as the data source for updating). Saving to a file is done with the command:
 
-*Схема таблиц в базе данных*
+```
+cd build
+server --save
+```
+
+# Tech Side
+
+The currencies are formatted from one format to another, more suitable for the client side. Data updates are monitored by an internal scheduler that triggers updates from sources every day at the specified time (default 13:30) or if the time after the last update exceeds 24 hours. Data from open sources is updated once a day, so you can set the desired time to receive it.
+
+The application client code does not sort the data (it comes to it already sorted). It also monitors for updates and checks if the server is available to receive data. By default, the request to the server is repeated every 5 minutes. By selecting both currencies on the web application page, the result of the ratio of 1 unit of currency on the right to 1 unit of currency on the left will automatically be displayed in a green frame.
+
+![Console logs](./console.png)
+*Console logs of backend server*
+
+![Database schema](./schema/database_schema.png)
+*Database schema that used in project*
