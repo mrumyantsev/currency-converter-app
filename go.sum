@@ -2,10 +2,8 @@ github.com/kelseyhightower/envconfig v1.4.0 h1:Im6hONhd3pLkfDFsbRgu68RDNkGF1r3dv
 github.com/kelseyhightower/envconfig v1.4.0/go.mod h1:cccZRl6mQpaq41TPp5QxidR+Sa3axMbJDNb//FQX6Gg=
 github.com/lib/pq v1.10.9 h1:YXG7RB+JIjhP29X+OtkiDnYaXQwpS4JEWq7dtCCRUEw=
 github.com/lib/pq v1.10.9/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
-github.com/mrumyantsev/go-idmap v0.2.1 h1:xJ8lUp0E3nHyN2SkoXEvdEBfHmpLgkz1MY+J0RvYl78=
-github.com/mrumyantsev/go-idmap v0.2.1/go.mod h1:CXRrbqJXiHA2CT3tZyPJJIumriPqKIpwiH+JUwNygwM=
-github.com/mrumyantsev/multilog v0.7.1 h1:ClESezlzM/0NzH5Hjhz3uzzs9mOb/t4tjhCHFhJ4kgk=
-github.com/mrumyantsev/multilog v0.7.1/go.mod h1:amjJLsqtaggGAaOm5HuP30IJVUidOZRhUe4EC+kIPOs=
+github.com/mrumyantsev/multilog v0.8.1 h1:2+6yqalW0/JIlyi2MYok9rkD7gxmeh+X3nnZgnRjNZA=
+github.com/mrumyantsev/multilog v0.8.1/go.mod h1:79Z0sb/pA9ZqEYVd+UOU7EVMXjHAl8xVjUjvwrOxzUo=
 golang.org/x/net v0.15.0 h1:ugBLEUaxABaB5AJqW9enI0ACdci2RUd4eP51NTBvuJ8=
 golang.org/x/net v0.15.0/go.mod h1:idbUs1IY1+zTqbi8yxTbhexhEEk5ur9LInksu6HrEpk=
 golang.org/x/text v0.13.0 h1:ablQoSUd0tRdKxZewP80B+BaqeKJuVhuRxj/dkrun3k=
