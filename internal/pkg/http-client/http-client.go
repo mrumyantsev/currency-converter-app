@@ -10,7 +10,7 @@ import (
 	"github.com/mrumyantsev/currency-converter/internal/pkg/config"
 	"github.com/mrumyantsev/currency-converter/internal/pkg/utils"
 
-	"github.com/mrumyantsev/fastlog"
+	"github.com/mrumyantsev/logx/log"
 )
 
 const (
@@ -54,14 +54,14 @@ func (c *HttpClient) GetCurrencyData() ([]byte, error) {
 
 	elapsedTime := time.Since(startTime)
 
-	fastlog.Debug(fmt.Sprintf("getting http data time overall: %s", elapsedTime))
+	log.Debug(fmt.Sprintf("getting http data time overall: %s", elapsedTime))
 
 	return data, nil
 }
 
 func (c *HttpClient) createRequest(url *url.URL) *http.Request {
-	fastlog.Debug(fmt.Sprintf("using %s protocol in request", c.config.HttpRequestProtocol))
-	fastlog.Debug(fmt.Sprintf("using user-agent header: %s", c.config.FakeUserAgentHeaderValue))
+	log.Debug(fmt.Sprintf("using %s protocol in request", c.config.HttpRequestProtocol))
+	log.Debug(fmt.Sprintf("using user-agent header: %s", c.config.FakeUserAgentHeaderValue))
 
 	return &http.Request{
 		Method: "GET",

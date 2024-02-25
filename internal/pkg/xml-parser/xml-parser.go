@@ -12,7 +12,7 @@ import (
 	"github.com/mrumyantsev/currency-converter/internal/pkg/models"
 	"github.com/mrumyantsev/currency-converter/internal/pkg/utils"
 
-	"github.com/mrumyantsev/fastlog"
+	"github.com/mrumyantsev/logx/log"
 	"golang.org/x/net/html/charset"
 )
 
@@ -39,14 +39,14 @@ func (p *XmlParser) Parse(data []byte) (*models.CurrencyStorage, error) {
 	decoder.CharsetReader = charset.NewReaderLabel
 
 	if p.config.IsUseMultithreadedParsing {
-		fastlog.Debug("using multithreaded parsing")
+		log.Debug("using multithreaded parsing")
 
 		currencyStorage, err = p.getParsedDataMultiThreaded(decoder)
 		if err != nil {
 			return nil, utils.DecorateError("cannot do multithreaded parsing", err)
 		}
 	} else {
-		fastlog.Debug("using singlethreaded parsing")
+		log.Debug("using singlethreaded parsing")
 
 		currencyStorage, err = p.getParsedDataSingleThreaded(decoder)
 		if err != nil {
@@ -56,7 +56,7 @@ func (p *XmlParser) Parse(data []byte) (*models.CurrencyStorage, error) {
 
 	elapsedTime := time.Since(startTime)
 
-	fastlog.Debug(fmt.Sprintf("parsing time overall: %s", elapsedTime))
+	log.Debug(fmt.Sprintf("parsing time overall: %s", elapsedTime))
 
 	return currencyStorage, nil
 }

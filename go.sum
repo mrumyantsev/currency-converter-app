@@ -2,8 +2,8 @@ github.com/kelseyhightower/envconfig v1.4.0 h1:Im6hONhd3pLkfDFsbRgu68RDNkGF1r3dv
 github.com/kelseyhightower/envconfig v1.4.0/go.mod h1:cccZRl6mQpaq41TPp5QxidR+Sa3axMbJDNb//FQX6Gg=
 github.com/lib/pq v1.10.9 h1:YXG7RB+JIjhP29X+OtkiDnYaXQwpS4JEWq7dtCCRUEw=
 github.com/lib/pq v1.10.9/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
-github.com/mrumyantsev/fastlog v0.1.0 h1:PITdaVEXciIVf8djwiKMm1tWbdnYbQwSJSpZgBUrw7Q=
-github.com/mrumyantsev/fastlog v0.1.0/go.mod h1:SdyNMEjsxsXyb4FCv1RkJsf83x3XuQkVgxSSg6biUSc=
+github.com/mrumyantsev/logx v1.0.4 h1:ynv+RrIwEaOADowBygFYUTKL0Zy01r3cAbg5BaVitqo=
+github.com/mrumyantsev/logx v1.0.4/go.mod h1:iDFYQdCr3TSywncZEgXVQtQ36hhlvkbP211bguSS5Nk=
 golang.org/x/net v0.15.0 h1:ugBLEUaxABaB5AJqW9enI0ACdci2RUd4eP51NTBvuJ8=
 golang.org/x/net v0.15.0/go.mod h1:idbUs1IY1+zTqbi8yxTbhexhEEk5ur9LInksu6HrEpk=
 golang.org/x/text v0.13.0 h1:ablQoSUd0tRdKxZewP80B+BaqeKJuVhuRxj/dkrun3k=

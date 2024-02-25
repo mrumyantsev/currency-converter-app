@@ -17,8 +17,9 @@ import (
 	timechecks "github.com/mrumyantsev/currency-converter/internal/pkg/time-checks"
 	"github.com/mrumyantsev/currency-converter/internal/pkg/utils"
 	xmlparser "github.com/mrumyantsev/currency-converter/internal/pkg/xml-parser"
+	"github.com/mrumyantsev/logx"
 
-	"github.com/mrumyantsev/fastlog"
+	"github.com/mrumyantsev/logx/log"
 )
 
 type ParserD struct {
@@ -37,10 +38,12 @@ func New() *ParserD {
 
 	err := cfg.Init()
 	if err != nil {
-		fastlog.Error("cannot initialize configuration", err)
+		log.Error("cannot initialize configuration", err)
 	}
 
-	fastlog.IsEnableDebugLogs = cfg.IsEnableDebugLogs
+	log.ApplyConfig(&logx.Config{
+		IsDisableDebugLogs: !cfg.IsEnableDebugLogs,
+	})
 
 	memStorage := memstorage.New()
 
@@ -59,15 +62,15 @@ func New() *ParserD {
 func (p *ParserD) SaveCurrencyDataToFile() {
 	data, err := p.httpClient.GetCurrencyData()
 	if err != nil {
-		fastlog.Error("cannot get currencies from web", err)
+		log.Error("cannot get currencies from web", err)
 	}
 
 	err = p.fsOps.OverwriteCurrencyDataFile(data)
 	if err != nil {
-		fastlog.Error("cannot write currencies to file", err)
+		log.Error("cannot write currencies to file", err)
 	}
 
-	fastlog.Info("currency data saved in file: " + p.config.CurrencySourceFile)
+	log.Info("currency data saved in file: " + p.config.CurrencySourceFile)
 }
 
 func (p *ParserD) Run() {
@@ -79,27 +82,27 @@ func (p *ParserD) Run() {
 	for {
 		err = p.updateCurrencyDataInStorages()
 		if err != nil {
-			fastlog.Error("cannot update currency data in storages", err)
+			log.Error("cannot update currency data in storages", err)
 		}
 
 		timeToNextUpdate, err = p.timeChecks.GetTimeToNextUpdate()
 		if err != nil {
-			fastlog.Error("cannot get time to next update", err)
+			log.Error("cannot get time to next update", err)
 		}
 
-		fastlog.Info("next update will occur after " +
+		log.Info("next update will occur after " +
 			(*timeToNextUpdate).Round(time.Second).String())
 
 		err = p.calculateOutputData()
 		if err != nil {
-			fastlog.Error("cannot calculate output data", err)
+			log.Error("cannot calculate output data", err)
 		}
 
 		if !p.httpServer.GetIsRunning() {
 			go func() {
 				err = p.httpServer.Run()
 				if err != nil {
-					fastlog.Error("cannot run http server", err)
+					log.Error("cannot run http server", err)
 				}
 			}()
 		}
@@ -122,7 +125,7 @@ func (p *ParserD) updateCurrencyDataInStorages() error {
 		return utils.DecorateError("cannot connect to db to do data update", err)
 	}
 
-	fastlog.Info("checking latest update datetime...")
+	log.Info("checking latest update datetime...")
 
 	latestUpdateDatetime, err = p.dbStorage.GetLatestUpdateDatetime()
 	if err != nil {
@@ -135,15 +138,15 @@ func (p *ParserD) updateCurrencyDataInStorages() error {
 	}
 
 	if isNeedUpdate {
-		fastlog.Info("data is outdated")
-		fastlog.Info("initializing update process...")
+		log.Info("data is outdated")
+		log.Info("initializing update process...")
 
 		latestCurrencyStorage, err = p.getParsedDataFromSource()
 		if err != nil {
 			return utils.DecorateError("cannot get parsed data from source", err)
 		}
 
-		fastlog.Info("saving data...")
+		log.Info("saving data...")
 
 		latestUpdateDatetime, err = p.dbStorage.InsertUpdateDatetime(currentDatetime)
 		if err != nil {
@@ -164,7 +167,7 @@ func (p *ParserD) updateCurrencyDataInStorages() error {
 	p.memStorage.SetUpdateDatetime(latestUpdateDatetime)
 	p.memStorage.SetCurrencyStorage(latestCurrencyStorage)
 
-	fastlog.Info("data is now up to date")
+	log.Info("data is now up to date")
 
 	err = p.dbStorage.Disconnect()
 	if err != nil {
@@ -180,17 +183,17 @@ func (p *ParserD) getParsedDataFromSource() (*models.CurrencyStorage, error) {
 		err          error
 	)
 
-	fastlog.Info("getting new data...")
+	log.Info("getting new data...")
 
 	if p.config.IsReadCurrencyDataFromFile {
-		fastlog.Debug("getting data from local file...")
+		log.Debug("getting data from local file...")
 
 		currencyData, err = p.fsOps.GetCurrencyData()
 		if err != nil {
 			return nil, utils.DecorateError("cannot get currencies from file", err)
 		}
 	} else {
-		fastlog.Debug("getting data from web...")
+		log.Debug("getting data from web...")
 
 		currencyData, err = p.httpClient.GetCurrencyData()
 		if err != nil {
@@ -203,7 +206,7 @@ func (p *ParserD) getParsedDataFromSource() (*models.CurrencyStorage, error) {
 		return nil, utils.DecorateError("cannot replace commas in data", err)
 	}
 
-	fastlog.Info("parsing data...")
+	log.Info("parsing data...")
 
 	currencyStorage, err := p.xmlParser.Parse(currencyData)
 	if err != nil {
@@ -248,7 +251,7 @@ func (p *ParserD) calculateOutputData() error {
 		err                error
 	)
 
-	fastlog.Info("calculate output data...")
+	log.Info("calculate output data...")
 
 	for _, currency := range currencyStorage.Currencies {
 		ratio, err = calculateRatio(&currency.CurrencyValue, &currency.Multiplier)

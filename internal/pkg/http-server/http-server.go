@@ -7,7 +7,7 @@ import (
 	"github.com/mrumyantsev/currency-converter/internal/pkg/config"
 	memstorage "github.com/mrumyantsev/currency-converter/internal/pkg/mem-storage"
 	"github.com/mrumyantsev/currency-converter/internal/pkg/utils"
-	"github.com/mrumyantsev/fastlog"
+	"github.com/mrumyantsev/logx/log"
 )
 
 type HttpServer struct {
@@ -46,7 +46,7 @@ func (s *HttpServer) GetIsRunning() bool {
 }
 
 func (s *HttpServer) Run() error {
-	fastlog.Info("http server has started at address " + s.server.Addr)
+	log.Info("http server has started at address " + s.server.Addr)
 
 	s.isRunning = true
 
