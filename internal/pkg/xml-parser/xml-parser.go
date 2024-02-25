@@ -7,10 +7,10 @@ import (
 	"io"
 	"time"
 
-	"github.com/mrumyantsev/currency-converter/internal/pkg/config"
-	"github.com/mrumyantsev/currency-converter/internal/pkg/consts"
-	"github.com/mrumyantsev/currency-converter/internal/pkg/models"
-	"github.com/mrumyantsev/currency-converter/internal/pkg/utils"
+	"github.com/mrumyantsev/currency-converter-app/internal/pkg/config"
+	"github.com/mrumyantsev/currency-converter-app/internal/pkg/consts"
+	"github.com/mrumyantsev/currency-converter-app/internal/pkg/models"
+	"github.com/mrumyantsev/currency-converter-app/internal/pkg/utils"
 
 	"github.com/mrumyantsev/logx/log"
 	"golang.org/x/net/html/charset"

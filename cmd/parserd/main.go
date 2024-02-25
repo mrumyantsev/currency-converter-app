@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/mrumyantsev/currency-converter/internal/app/parserd"
+	"github.com/mrumyantsev/currency-converter-app/internal/app/parserd"
 )
 
 func main() {

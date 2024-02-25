@@ -2,7 +2,7 @@ package config
 
 import (
 	"github.com/kelseyhightower/envconfig"
-	"github.com/mrumyantsev/currency-converter/internal/pkg/utils"
+	"github.com/mrumyantsev/currency-converter-app/internal/pkg/utils"
 )
 
 type Config struct {

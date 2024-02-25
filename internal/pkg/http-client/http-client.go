@@ -7,8 +7,8 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/mrumyantsev/currency-converter/internal/pkg/config"
-	"github.com/mrumyantsev/currency-converter/internal/pkg/utils"
+	"github.com/mrumyantsev/currency-converter-app/internal/pkg/config"
+	"github.com/mrumyantsev/currency-converter-app/internal/pkg/utils"
 
 	"github.com/mrumyantsev/logx/log"
 )

@@ -4,10 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/mrumyantsev/currency-converter/internal/pkg/config"
-	"github.com/mrumyantsev/currency-converter/internal/pkg/consts"
-	"github.com/mrumyantsev/currency-converter/internal/pkg/models"
-	"github.com/mrumyantsev/currency-converter/internal/pkg/utils"
+	"github.com/mrumyantsev/currency-converter-app/internal/pkg/config"
+	"github.com/mrumyantsev/currency-converter-app/internal/pkg/consts"
+	"github.com/mrumyantsev/currency-converter-app/internal/pkg/models"
+	"github.com/mrumyantsev/currency-converter-app/internal/pkg/utils"
 
 	_ "github.com/lib/pq"
 )

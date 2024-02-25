@@ -1,4 +1,4 @@
-module github.com/mrumyantsev/currency-converter
+module github.com/mrumyantsev/currency-converter-app
 
 go 1.20
 

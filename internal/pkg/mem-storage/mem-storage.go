@@ -1,6 +1,6 @@
 package memstorage
 
-import "github.com/mrumyantsev/currency-converter/internal/pkg/models"
+import "github.com/mrumyantsev/currency-converter-app/internal/pkg/models"
 
 type MemStorage struct {
 	currencyStorage      *models.CurrencyStorage

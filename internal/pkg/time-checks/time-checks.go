@@ -3,9 +3,9 @@ package timechecks
 import (
 	"time"
 
-	"github.com/mrumyantsev/currency-converter/internal/pkg/config"
-	"github.com/mrumyantsev/currency-converter/internal/pkg/models"
-	"github.com/mrumyantsev/currency-converter/internal/pkg/utils"
+	"github.com/mrumyantsev/currency-converter-app/internal/pkg/config"
+	"github.com/mrumyantsev/currency-converter-app/internal/pkg/models"
+	"github.com/mrumyantsev/currency-converter-app/internal/pkg/utils"
 )
 
 const (

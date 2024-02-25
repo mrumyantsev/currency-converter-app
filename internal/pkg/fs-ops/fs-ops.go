@@ -4,8 +4,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/mrumyantsev/currency-converter/internal/pkg/config"
-	"github.com/mrumyantsev/currency-converter/internal/pkg/utils"
+	"github.com/mrumyantsev/currency-converter-app/internal/pkg/config"
+	"github.com/mrumyantsev/currency-converter-app/internal/pkg/utils"
 )
 
 type FsOps struct {

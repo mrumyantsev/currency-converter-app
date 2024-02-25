@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/mrumyantsev/currency-converter/internal/pkg/config"
-	memstorage "github.com/mrumyantsev/currency-converter/internal/pkg/mem-storage"
-	"github.com/mrumyantsev/currency-converter/internal/pkg/utils"
+	"github.com/mrumyantsev/currency-converter-app/internal/pkg/config"
+	memstorage "github.com/mrumyantsev/currency-converter-app/internal/pkg/mem-storage"
+	"github.com/mrumyantsev/currency-converter-app/internal/pkg/utils"
 	"github.com/mrumyantsev/logx/log"
 )
 
