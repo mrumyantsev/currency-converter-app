@@ -49,6 +49,13 @@ const updateDataFromServer = () => {
         return;
     }
 
+    const dolIdx = data.findIndex(curr => curr.charCode === "USD");
+    const dolCurr = data.splice(dolIdx, 1)[0];
+    const eurIdx = data.findIndex(curr => curr.charCode === "EUR");
+    const eurCurr = data.splice(eurIdx, 1)[0];
+
+    data.unshift(eurCurr);
+    data.unshift(dolCurr);
     data.unshift(rubleCurrency);
 
     if (isFirstTimeGetUpdated) {
@@ -82,8 +89,8 @@ const getDataFromServer = (url) => {
 }
 
 const initPageElements = (data) => {
-    const firstCurrency = data[0];
-    const secondCurrency = data[1];
+    const firstCurrency = data.find(curr => curr.charCode === "USD");
+    const secondCurrency = data.find(curr => curr.charCode === "RUB");
 
     leftCurrencyButton.text(
         getExtendedCurrencyName(firstCurrency));
@@ -107,7 +114,7 @@ const fillList = (list, side, data) => {
     let i = 0;
 
     while (i < data.length) {
-        if (i === 1) {
+        if (i === 3) {
             list.append(divider);    
         }
 
