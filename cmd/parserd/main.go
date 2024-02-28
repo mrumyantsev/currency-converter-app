@@ -7,12 +7,12 @@ import (
 )
 
 func main() {
-	parserD := parserd.New()
+	app := parserd.New()
 
 	if isGotSecondArg("--save") {
-		parserD.SaveCurrencyDataToFile()
+		app.SaveCurrencyDataToFile()
 	} else {
-		parserD.Run()
+		app.Run()
 	}
 }
 
