@@ -82,12 +82,12 @@ func (a *App) Run() {
 	for {
 		err = a.updateCurrencyDataInStorages()
 		if err != nil {
-			log.Error("cannot update currency data in storages", err)
+			log.Fatal("cannot update currency data in storages", err)
 		}
 
 		timeToNextUpdate, err = a.timeChecks.GetTimeToNextUpdate()
 		if err != nil {
-			log.Error("cannot get time to next update", err)
+			log.Fatal("cannot get time to next update", err)
 		}
 
 		log.Info("next update will occur after " +
@@ -95,14 +95,14 @@ func (a *App) Run() {
 
 		err = a.calculateOutputData()
 		if err != nil {
-			log.Error("cannot calculate output data", err)
+			log.Fatal("cannot calculate output data", err)
 		}
 
 		if !a.httpServer.GetIsRunning() {
 			go func() {
 				err = a.httpServer.Run()
 				if err != nil {
-					log.Error("cannot run http server", err)
+					log.Fatal("cannot run http server", err)
 				}
 			}()
 		}
