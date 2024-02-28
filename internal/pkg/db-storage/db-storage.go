@@ -30,18 +30,18 @@ func (s *DbStorage) Connect() error {
 	var (
 		psqlInfo = fmt.Sprintf("host=%s port=%s user=%s "+
 			"password=%s dbname=%s sslmode=%s",
-			s.config.StorageHostname,
-			s.config.StoragePort,
-			s.config.StorageUser,
-			s.config.StoragePassword,
-			s.config.StorageDatabaseName,
-			s.config.StorageSSLMode,
+			s.config.DbHostname,
+			s.config.DbPort,
+			s.config.DbUsername,
+			s.config.DbPassword,
+			s.config.DbDatabase,
+			s.config.DbSSLMode,
 		)
 
 		err error
 	)
 
-	s.conn, err = sql.Open(s.config.StorageDriver, psqlInfo)
+	s.conn, err = sql.Open(s.config.DbDriver, psqlInfo)
 	if err != nil {
 		return utils.DecorateError("cannot connect to db", err)
 	}

@@ -15,13 +15,13 @@ type Config struct {
 	IsUseMultithreadedParsing    bool   `envconfig:"USE_MULTITHREADED_PARSING" default:"true"`
 	TimeWhenNeedToUpdateCurrency string `envconfig:"TIME_WHEN_NEED_TO_UPDATE_CURRENCY" default:"13:30:00"`
 
-	StorageDriver       string `envconfig:"STORAGE_DRIVER" default:"postgres"`
-	StorageHostname     string `envconfig:"STORAGE_HOSTNAME" default:"localhost"`
-	StoragePort         string `envconfig:"STORAGE_PORT" default:"5432"`
-	StorageUser         string `envconfig:"STORAGE_USER" default:"postgres"`
-	StoragePassword     string `envconfig:"STORAGE_PASSWORD" default:""`
-	StorageDatabaseName string `envconfig:"STORAGE_DATABASE_NAME" default:"currency_storage"`
-	StorageSSLMode      string `envconfig:"STORAGE_SSL_MODE" default:"disable"`
+	DbDriver   string `envconfig:"DB_DRIVER" default:"postgres"`
+	DbHostname string `envconfig:"DB_HOSTNAME" default:"localhost"`
+	DbPort     string `envconfig:"DB_PORT" default:"5432"`
+	DbUsername string `envconfig:"DB_USERNAME" default:"postgres"`
+	DbPassword string `envconfig:"DB_PASSWORD" default:""`
+	DbDatabase string `envconfig:"DB_DATABASE" default:"currency_storage"`
+	DbSSLMode  string `envconfig:"DB_SSLMODE" default:"disable"`
 
 	HttpServerListenIp   string `envconfig:"HTTP_SERVER_LISTEN_IP" default:"0.0.0.0"`
 	HttpServerListenPort string `envconfig:"HTTP_SERVER_LISTEN_PORT" default:"8080"`
