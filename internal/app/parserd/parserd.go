@@ -124,6 +124,7 @@ func (a *App) updateCurrencyDataInStorages() error {
 	if err != nil {
 		return utils.DecorateError("cannot connect to db to do data update", err)
 	}
+	defer func() { _ = a.dbStorage.Disconnect() }()
 
 	log.Info("checking latest update datetime...")
 
@@ -168,11 +169,6 @@ func (a *App) updateCurrencyDataInStorages() error {
 	a.memStorage.SetCurrencyStorage(latestCurrencyStorage)
 
 	log.Info("data is now up to date")
-
-	err = a.dbStorage.Disconnect()
-	if err != nil {
-		return utils.DecorateError("cannot disconnect from db to do data update", err)
-	}
 
 	return nil
 }
