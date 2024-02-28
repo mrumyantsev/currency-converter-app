@@ -2,7 +2,7 @@ package config
 
 import (
 	"github.com/kelseyhightower/envconfig"
-	"github.com/mrumyantsev/currency-converter-app/internal/pkg/utils"
+	"github.com/mrumyantsev/currency-converter-app/pkg/lib"
 )
 
 type Config struct {
@@ -36,7 +36,7 @@ func New() *Config {
 func (c *Config) Init() error {
 	err := envconfig.Process("", c)
 	if err != nil {
-		return utils.DecorateError("cannot populate struct with environment variables", err)
+		return lib.DecorateError("cannot populate struct with environment variables", err)
 	}
 
 	return nil

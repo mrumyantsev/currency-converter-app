@@ -7,7 +7,7 @@ import (
 	"github.com/mrumyantsev/currency-converter-app/internal/pkg/config"
 	"github.com/mrumyantsev/currency-converter-app/internal/pkg/consts"
 	"github.com/mrumyantsev/currency-converter-app/internal/pkg/models"
-	"github.com/mrumyantsev/currency-converter-app/internal/pkg/utils"
+	"github.com/mrumyantsev/currency-converter-app/pkg/lib"
 
 	_ "github.com/lib/pq"
 )
@@ -43,7 +43,7 @@ func (s *DbStorage) Connect() error {
 
 	s.conn, err = sql.Open(s.config.DbDriver, psqlInfo)
 	if err != nil {
-		return utils.DecorateError("cannot connect to db", err)
+		return lib.DecorateError("cannot connect to db", err)
 	}
 
 	return nil
@@ -53,7 +53,7 @@ func (s *DbStorage) Connect() error {
 func (s *DbStorage) Disconnect() error {
 	err := s.conn.Close()
 	if err != nil {
-		return utils.DecorateError("cannot disconnect from db", err)
+		return lib.DecorateError("cannot disconnect from db", err)
 	}
 
 	return nil
@@ -71,7 +71,7 @@ func (s *DbStorage) GetLatestUpdateDatetime() (*models.UpdateDatetime, error) {
 
 	rows, err := s.conn.Query(query)
 	if err != nil {
-		return nil, utils.DecorateError("cannot perform select of update datetimes", err)
+		return nil, lib.DecorateError("cannot perform select of update datetimes", err)
 	}
 	defer rows.Close()
 
@@ -80,7 +80,7 @@ func (s *DbStorage) GetLatestUpdateDatetime() (*models.UpdateDatetime, error) {
 	for rows.Next() {
 		err = rows.Scan(&res.Id, &res.UpdateDatetime)
 		if err != nil {
-			return nil, utils.DecorateError("cannot scan from a row", err)
+			return nil, lib.DecorateError("cannot scan from a row", err)
 		}
 	}
 
@@ -97,12 +97,12 @@ func (s *DbStorage) InsertUpdateDatetime(datetime string) (*models.UpdateDatetim
 
 	stmt, err := s.conn.Prepare(query)
 	if err != nil {
-		return nil, utils.DecorateError("cannot prepare statement for inserting datetime", err)
+		return nil, lib.DecorateError("cannot prepare statement for inserting datetime", err)
 	}
 
 	row := stmt.QueryRow(datetime)
 	if err != nil {
-		return nil, utils.DecorateError("cannot execute inserting state of datetime", err)
+		return nil, lib.DecorateError("cannot execute inserting state of datetime", err)
 	}
 
 	var (
@@ -135,12 +135,12 @@ func (s *DbStorage) GetLatestCurrencies(updateDatetimeId int) (*models.CurrencyS
 
 	stmt, err := s.conn.Prepare(query)
 	if err != nil {
-		return nil, utils.DecorateError("cannot prepare statement for getting currencies", err)
+		return nil, lib.DecorateError("cannot prepare statement for getting currencies", err)
 	}
 
 	rows, err := stmt.Query(updateDatetimeId)
 	if err != nil {
-		return nil, utils.DecorateError("cannot perform select of currencies", err)
+		return nil, lib.DecorateError("cannot perform select of currencies", err)
 	}
 	defer rows.Close()
 
@@ -164,7 +164,7 @@ func (s *DbStorage) GetLatestCurrencies(updateDatetimeId int) (*models.CurrencyS
 			&currency.CurrencyValue,
 		)
 		if err != nil {
-			return nil, utils.DecorateError("cannot scan currency entry from a row", err)
+			return nil, lib.DecorateError("cannot scan currency entry from a row", err)
 		}
 
 		currencyStorage.Currencies = append(currencyStorage.Currencies, currency)
@@ -194,7 +194,7 @@ func (s *DbStorage) InsertCurrencies(currencyStorage *models.CurrencyStorage, up
 
 	stmt, err := s.conn.Prepare(query)
 	if err != nil {
-		return utils.DecorateError("cannot prepare statement for inserting currencies", err)
+		return lib.DecorateError("cannot prepare statement for inserting currencies", err)
 	}
 
 	var (
@@ -211,7 +211,7 @@ func (s *DbStorage) InsertCurrencies(currencyStorage *models.CurrencyStorage, up
 
 	_, err = stmt.Exec(entries...)
 	if err != nil {
-		return utils.DecorateError("cannot execute inserting of currencies", err)
+		return lib.DecorateError("cannot execute inserting of currencies", err)
 	}
 
 	return nil
