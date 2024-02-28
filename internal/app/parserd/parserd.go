@@ -62,12 +62,12 @@ func New() *App {
 func (a *App) SaveCurrencyDataToFile() {
 	data, err := a.httpClient.GetCurrencyData()
 	if err != nil {
-		log.Error("cannot get currencies from web", err)
+		log.Fatal("cannot get currencies from web", err)
 	}
 
 	err = a.fsOps.OverwriteCurrencyDataFile(data)
 	if err != nil {
-		log.Error("cannot write currencies to file", err)
+		log.Fatal("cannot write currencies to file", err)
 	}
 
 	log.Info("currency data saved in file: " + a.config.CurrencySourceFile)
