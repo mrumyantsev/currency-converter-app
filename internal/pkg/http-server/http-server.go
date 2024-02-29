@@ -54,7 +54,7 @@ func (s *HttpServer) Run() error {
 	if err != nil {
 		s.isRunning = false
 
-		return e.Wrap("cannot run http listener", err)
+		return e.Wrap("could not run http listener", err)
 	}
 
 	return nil
@@ -65,12 +65,12 @@ func (s *HttpServer) getCurrencies(w http.ResponseWriter, r *http.Request) error
 
 	responseBodyData, err := json.Marshal(calculatedCurrencies)
 	if err != nil {
-		return e.Wrap("cannot marshall curencies to json", err)
+		return e.Wrap("could not marshall curencies to json", err)
 	}
 
 	_, err = w.Write(responseBodyData)
 	if err != nil {
-		return e.Wrap("cannot write data to http reponse", err)
+		return e.Wrap("could not write data to http reponse", err)
 	}
 
 	return nil

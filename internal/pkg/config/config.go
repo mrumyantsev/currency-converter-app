@@ -36,7 +36,7 @@ func New() *Config {
 func (c *Config) Init() error {
 	err := envconfig.Process("", c)
 	if err != nil {
-		return e.Wrap("cannot populate struct with environment variables", err)
+		return e.Wrap("could not populate struct with environment variables", err)
 	}
 
 	return nil

@@ -23,13 +23,13 @@ func New(cfg *config.Config) *FsOps {
 func (f *FsOps) GetCurrencyData() ([]byte, error) {
 	file, err := os.Open(f.config.CurrencySourceFile)
 	if err != nil {
-		return nil, e.Wrap("cannot open file", err)
+		return nil, e.Wrap("could not open file", err)
 	}
 	defer file.Close()
 
 	data, err := io.ReadAll(file)
 	if err != nil {
-		return nil, e.Wrap("cannot read all data from file", err)
+		return nil, e.Wrap("could not read all data from file", err)
 	}
 
 	return data, nil
@@ -46,7 +46,7 @@ func (f *FsOps) OverwriteCurrencyDataFile(data []byte) error {
 
 	err := os.WriteFile(f.config.CurrencySourceFile, data, 0777)
 	if err != nil {
-		return e.Wrap("cannot write file", err)
+		return e.Wrap("could not write file", err)
 	}
 
 	return nil

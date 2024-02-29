@@ -43,14 +43,14 @@ func (p *XmlParser) Parse(data []byte) (*models.CurrencyStorage, error) {
 
 		currencyStorage, err = p.getParsedDataMultiThreaded(decoder)
 		if err != nil {
-			return nil, e.Wrap("cannot do multithreaded parsing", err)
+			return nil, e.Wrap("could not do multithreaded parsing", err)
 		}
 	} else {
 		log.Debug("using singlethreaded parsing")
 
 		currencyStorage, err = p.getParsedDataSingleThreaded(decoder)
 		if err != nil {
-			return nil, e.Wrap("cannot do singlethreaded parsing", err)
+			return nil, e.Wrap("could not do singlethreaded parsing", err)
 		}
 	}
 
@@ -88,7 +88,7 @@ func (p *XmlParser) getParsedDataMultiThreaded(decoder *xml.Decoder) (*models.Cu
 				break
 			}
 
-			return nil, e.Wrap("cannot decode xml element", err)
+			return nil, e.Wrap("could not decode xml element", err)
 		}
 
 		if token == nil {
@@ -123,7 +123,7 @@ func (p *XmlParser) getParsedDataSingleThreaded(decoder *xml.Decoder) (*models.C
 
 	err = decoder.Decode(&currencyStorage)
 	if err != nil {
-		return nil, e.Wrap("cannot decode xml data", err)
+		return nil, e.Wrap("could not decode xml data", err)
 	}
 
 	return &currencyStorage, nil
