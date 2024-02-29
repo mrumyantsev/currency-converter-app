@@ -5,7 +5,7 @@ import (
 
 	"github.com/mrumyantsev/currency-converter-app/internal/pkg/config"
 	"github.com/mrumyantsev/currency-converter-app/internal/pkg/models"
-	"github.com/mrumyantsev/currency-converter-app/pkg/lib"
+	"github.com/mrumyantsev/currency-converter-app/pkg/lib/e"
 )
 
 const (
@@ -29,17 +29,17 @@ func (t *TimeChecks) IsNeedForUpdateDb(updateDatetime *models.UpdateDatetime) (b
 	latestUpdateDatetime, err := time.Parse(
 		time.RFC3339, updateDatetime.UpdateDatetime)
 	if err != nil {
-		return false, lib.DecorateError("cannot parse update time from db", err)
+		return false, e.Wrap("cannot parse update time from db", err)
 	}
 
 	todayUpdateDatetime, err := t.GetDayUpdateDatetime(DAY_TODAY)
 	if err != nil {
-		return false, lib.DecorateError("cannot get today update datetime", err)
+		return false, e.Wrap("cannot get today update datetime", err)
 	}
 
 	yesterdayUpdateDatetime, err := t.GetDayUpdateDatetime(DAY_YESTERDAY)
 	if err != nil {
-		return false, lib.DecorateError("cannot get yesterday update datetime", err)
+		return false, e.Wrap("cannot get yesterday update datetime", err)
 	}
 
 	currentDatetime := time.Now()
@@ -62,7 +62,7 @@ func (t *TimeChecks) GetTimeToNextUpdate() (*time.Duration, error) {
 
 	todayUpdateDatetime, err = t.GetDayUpdateDatetime(DAY_TODAY)
 	if err != nil {
-		return nil, lib.DecorateError("cannot get today update datetime", err)
+		return nil, e.Wrap("cannot get today update datetime", err)
 	}
 
 	if currentDatetime.After(*todayUpdateDatetime) {
@@ -71,7 +71,7 @@ func (t *TimeChecks) GetTimeToNextUpdate() (*time.Duration, error) {
 
 	nextUpdateDatetime, err = t.GetDayUpdateDatetime(day)
 	if err != nil {
-		return nil, lib.DecorateError("cannot get next update datetime", err)
+		return nil, e.Wrap("cannot get next update datetime", err)
 	}
 
 	timeToNextUpdate = time.Since(*nextUpdateDatetime).Abs()
@@ -82,7 +82,7 @@ func (t *TimeChecks) GetTimeToNextUpdate() (*time.Duration, error) {
 func (t *TimeChecks) GetDayUpdateDatetime(todayOffset int) (*time.Time, error) {
 	updateTime, err := time.Parse(TIME_ONLY_FORMAT, t.config.TimeWhenNeedToUpdateCurrency)
 	if err != nil {
-		return nil, lib.DecorateError("cannot parse update time from config", err)
+		return nil, e.Wrap("cannot parse update time from config", err)
 	}
 
 	todayYear, todayMonth, todayDay := time.Now().Date()

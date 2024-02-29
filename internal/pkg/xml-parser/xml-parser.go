@@ -10,7 +10,7 @@ import (
 	"github.com/mrumyantsev/currency-converter-app/internal/pkg/config"
 	"github.com/mrumyantsev/currency-converter-app/internal/pkg/consts"
 	"github.com/mrumyantsev/currency-converter-app/internal/pkg/models"
-	"github.com/mrumyantsev/currency-converter-app/pkg/lib"
+	"github.com/mrumyantsev/currency-converter-app/pkg/lib/e"
 
 	"github.com/mrumyantsev/logx/log"
 	"golang.org/x/net/html/charset"
@@ -43,14 +43,14 @@ func (p *XmlParser) Parse(data []byte) (*models.CurrencyStorage, error) {
 
 		currencyStorage, err = p.getParsedDataMultiThreaded(decoder)
 		if err != nil {
-			return nil, lib.DecorateError("cannot do multithreaded parsing", err)
+			return nil, e.Wrap("cannot do multithreaded parsing", err)
 		}
 	} else {
 		log.Debug("using singlethreaded parsing")
 
 		currencyStorage, err = p.getParsedDataSingleThreaded(decoder)
 		if err != nil {
-			return nil, lib.DecorateError("cannot do singlethreaded parsing", err)
+			return nil, e.Wrap("cannot do singlethreaded parsing", err)
 		}
 	}
 
@@ -88,7 +88,7 @@ func (p *XmlParser) getParsedDataMultiThreaded(decoder *xml.Decoder) (*models.Cu
 				break
 			}
 
-			return nil, lib.DecorateError("cannot decode xml element", err)
+			return nil, e.Wrap("cannot decode xml element", err)
 		}
 
 		if token == nil {
@@ -123,7 +123,7 @@ func (p *XmlParser) getParsedDataSingleThreaded(decoder *xml.Decoder) (*models.C
 
 	err = decoder.Decode(&currencyStorage)
 	if err != nil {
-		return nil, lib.DecorateError("cannot decode xml data", err)
+		return nil, e.Wrap("cannot decode xml data", err)
 	}
 
 	return &currencyStorage, nil

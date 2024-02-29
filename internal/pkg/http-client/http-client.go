@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/mrumyantsev/currency-converter-app/internal/pkg/config"
-	"github.com/mrumyantsev/currency-converter-app/pkg/lib"
+	"github.com/mrumyantsev/currency-converter-app/pkg/lib/e"
 
 	"github.com/mrumyantsev/logx/log"
 )
@@ -36,19 +36,19 @@ func (c *HttpClient) GetCurrencyData() ([]byte, error) {
 
 	url, err := url.Parse(c.config.CurrencySourceUrl)
 	if err != nil {
-		return nil, lib.DecorateError("cannot parse url", err)
+		return nil, e.Wrap("cannot parse url", err)
 	}
 
 	requ := c.createRequest(url)
 
 	resp, err := c.client.Do(requ)
 	if err != nil {
-		return nil, lib.DecorateError("cannot send request to server", err)
+		return nil, e.Wrap("cannot send request to server", err)
 	}
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, lib.DecorateError("cannot read data from response body", err)
+		return nil, e.Wrap("cannot read data from response body", err)
 	}
 	defer resp.Body.Close()
 

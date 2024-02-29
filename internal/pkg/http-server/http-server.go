@@ -6,7 +6,7 @@ import (
 
 	"github.com/mrumyantsev/currency-converter-app/internal/pkg/config"
 	memstorage "github.com/mrumyantsev/currency-converter-app/internal/pkg/mem-storage"
-	"github.com/mrumyantsev/currency-converter-app/pkg/lib"
+	"github.com/mrumyantsev/currency-converter-app/pkg/lib/e"
 	"github.com/mrumyantsev/logx/log"
 )
 
@@ -54,7 +54,7 @@ func (s *HttpServer) Run() error {
 	if err != nil {
 		s.isRunning = false
 
-		return lib.DecorateError("cannot run http listener", err)
+		return e.Wrap("cannot run http listener", err)
 	}
 
 	return nil
@@ -65,12 +65,12 @@ func (s *HttpServer) getCurrencies(w http.ResponseWriter, r *http.Request) error
 
 	responseBodyData, err := json.Marshal(calculatedCurrencies)
 	if err != nil {
-		return lib.DecorateError("cannot marshall curencies to json", err)
+		return e.Wrap("cannot marshall curencies to json", err)
 	}
 
 	_, err = w.Write(responseBodyData)
 	if err != nil {
-		return lib.DecorateError("cannot write data to http reponse", err)
+		return e.Wrap("cannot write data to http reponse", err)
 	}
 
 	return nil

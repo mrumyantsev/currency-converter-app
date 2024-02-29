@@ -16,7 +16,7 @@ import (
 	"github.com/mrumyantsev/currency-converter-app/internal/pkg/models"
 	timechecks "github.com/mrumyantsev/currency-converter-app/internal/pkg/time-checks"
 	xmlparser "github.com/mrumyantsev/currency-converter-app/internal/pkg/xml-parser"
-	"github.com/mrumyantsev/currency-converter-app/pkg/lib"
+	"github.com/mrumyantsev/currency-converter-app/pkg/lib/e"
 	"github.com/mrumyantsev/logx"
 
 	"github.com/mrumyantsev/logx/log"
@@ -122,7 +122,7 @@ func (a *App) updateCurrencyDataInStorages() error {
 
 	err = a.dbStorage.Connect()
 	if err != nil {
-		return lib.DecorateError("cannot connect to db to do data update", err)
+		return e.Wrap("cannot connect to db to do data update", err)
 	}
 	defer func() { _ = a.dbStorage.Disconnect() }()
 
@@ -130,12 +130,12 @@ func (a *App) updateCurrencyDataInStorages() error {
 
 	latestUpdateDatetime, err = a.dbStorage.GetLatestUpdateDatetime()
 	if err != nil {
-		return lib.DecorateError("cannot get current update datetime", err)
+		return e.Wrap("cannot get current update datetime", err)
 	}
 
 	isNeedUpdate, err = a.timeChecks.IsNeedForUpdateDb(latestUpdateDatetime)
 	if err != nil {
-		return lib.DecorateError("cannot check is need update for db or not", err)
+		return e.Wrap("cannot check is need update for db or not", err)
 	}
 
 	if isNeedUpdate {
@@ -144,25 +144,25 @@ func (a *App) updateCurrencyDataInStorages() error {
 
 		latestCurrencyStorage, err = a.getParsedDataFromSource()
 		if err != nil {
-			return lib.DecorateError("cannot get parsed data from source", err)
+			return e.Wrap("cannot get parsed data from source", err)
 		}
 
 		log.Info("saving data...")
 
 		latestUpdateDatetime, err = a.dbStorage.InsertUpdateDatetime(currentDatetime)
 		if err != nil {
-			return lib.DecorateError("cannot insert datetime into db", err)
+			return e.Wrap("cannot insert datetime into db", err)
 		}
 
 		err = a.dbStorage.InsertCurrencies(latestCurrencyStorage, latestUpdateDatetime.Id)
 		if err != nil {
-			return lib.DecorateError("cannot insert currencies into db", err)
+			return e.Wrap("cannot insert currencies into db", err)
 		}
 	}
 
 	latestCurrencyStorage, err = a.dbStorage.GetLatestCurrencies(latestUpdateDatetime.Id)
 	if err != nil {
-		return lib.DecorateError("cannot get currencies from db", err)
+		return e.Wrap("cannot get currencies from db", err)
 	}
 
 	a.memStorage.SetUpdateDatetime(latestUpdateDatetime)
@@ -186,27 +186,27 @@ func (a *App) getParsedDataFromSource() (*models.CurrencyStorage, error) {
 
 		currencyData, err = a.fsOps.GetCurrencyData()
 		if err != nil {
-			return nil, lib.DecorateError("cannot get currencies from file", err)
+			return nil, e.Wrap("cannot get currencies from file", err)
 		}
 	} else {
 		log.Debug("getting data from web...")
 
 		currencyData, err = a.httpClient.GetCurrencyData()
 		if err != nil {
-			return nil, lib.DecorateError("cannot get curencies from web", err)
+			return nil, e.Wrap("cannot get curencies from web", err)
 		}
 	}
 
 	err = replaceCommasWithDots(currencyData)
 	if err != nil {
-		return nil, lib.DecorateError("cannot replace commas in data", err)
+		return nil, e.Wrap("cannot replace commas in data", err)
 	}
 
 	log.Info("parsing data...")
 
 	currencyStorage, err := a.xmlParser.Parse(currencyData)
 	if err != nil {
-		return nil, lib.DecorateError("cannot parse data", err)
+		return nil, e.Wrap("cannot parse data", err)
 	}
 
 	return currencyStorage, nil
@@ -252,7 +252,7 @@ func (a *App) calculateOutputData() error {
 	for _, currency := range currencyStorage.Currencies {
 		ratio, err = calculateRatio(&currency.CurrencyValue, &currency.Multiplier)
 		if err != nil {
-			return lib.DecorateError("cannot calculate currency rate", err)
+			return e.Wrap("cannot calculate currency rate", err)
 		}
 
 		calculatedCurrency.Name = currency.Name
@@ -284,7 +284,7 @@ func calculateRatio(currencyValue *string, currencyMultiplier *int) (*string, er
 
 	value, err = strconv.ParseFloat(*currencyValue, FLOAT_BIT_SIZE)
 	if err != nil {
-		return nil, lib.DecorateError("cannot parse string to float", err)
+		return nil, e.Wrap("cannot parse string to float", err)
 	}
 
 	multiplier = float64(*currencyMultiplier)
