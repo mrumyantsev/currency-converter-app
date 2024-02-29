@@ -1,7 +1,7 @@
 package main
 
 import (
-	"os"
+	"flag"
 
 	"github.com/mrumyantsev/currency-converter-app/internal/app/parserd"
 )
@@ -9,21 +9,19 @@ import (
 func main() {
 	app := parserd.New()
 
-	if isGotSecondArg("--save") {
+	if isUserWantSave() {
 		app.SaveCurrencyDataToFile()
-	} else {
-		app.Run()
+
+		return
 	}
+
+	app.Run()
 }
 
-func isGotSecondArg(arg string) bool {
-	if len(os.Args) != 2 {
-		return false
-	}
+func isUserWantSave() bool {
+	f := flag.Bool("s", false, "Save currency data to a local file")
 
-	if os.Args[1] == arg {
-		return true
-	}
+	flag.Parse()
 
-	return false
+	return *f
 }
