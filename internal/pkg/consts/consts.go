@@ -1,6 +1,0 @@
-package consts
-
-const (
-	LENGTH_OF_CURRENCIES_SCLICE_INITIAL   int = 0
-	CAPACITY_OF_CURRENCIES_SCLICE_INITIAL int = 50
-)

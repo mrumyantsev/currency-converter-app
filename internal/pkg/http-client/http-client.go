@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	USER_AGENT_HEADER_NAME = "User-Agent"
+	userAgentHeader = "User-Agent"
 )
 
 type HttpClient struct {
@@ -68,7 +68,7 @@ func (c *HttpClient) createRequest(url *url.URL) *http.Request {
 		URL:    url,
 		Proto:  c.config.HttpRequestProtocol,
 		Header: map[string][]string{
-			USER_AGENT_HEADER_NAME: {c.config.FakeUserAgentHeaderValue},
+			userAgentHeader: {c.config.FakeUserAgentHeaderValue},
 		},
 	}
 }

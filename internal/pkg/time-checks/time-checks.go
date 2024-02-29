@@ -9,10 +9,9 @@ import (
 )
 
 const (
-	DAY_YESTERDAY    int    = -1
-	DAY_TODAY        int    = 0
-	DAY_TOMORROW     int    = 1
-	TIME_ONLY_FORMAT string = "15:04:05"
+	dayYesterday = -1
+	dayToday     = 0
+	dayTomorrow  = 1
 )
 
 type TimeChecks struct {
@@ -32,12 +31,12 @@ func (t *TimeChecks) IsNeedForUpdateDb(updateDatetime *models.UpdateDatetime) (b
 		return false, e.Wrap("could not parse update time from db", err)
 	}
 
-	todayUpdateDatetime, err := t.GetDayUpdateDatetime(DAY_TODAY)
+	todayUpdateDatetime, err := t.GetDayUpdateDatetime(dayToday)
 	if err != nil {
 		return false, e.Wrap("could not get today update datetime", err)
 	}
 
-	yesterdayUpdateDatetime, err := t.GetDayUpdateDatetime(DAY_YESTERDAY)
+	yesterdayUpdateDatetime, err := t.GetDayUpdateDatetime(dayYesterday)
 	if err != nil {
 		return false, e.Wrap("could not get yesterday update datetime", err)
 	}
@@ -56,17 +55,17 @@ func (t *TimeChecks) GetTimeToNextUpdate() (*time.Duration, error) {
 		todayUpdateDatetime *time.Time
 		nextUpdateDatetime  *time.Time
 		timeToNextUpdate    time.Duration
-		day                 int = DAY_TODAY
+		day                 int = dayToday
 		err                 error
 	)
 
-	todayUpdateDatetime, err = t.GetDayUpdateDatetime(DAY_TODAY)
+	todayUpdateDatetime, err = t.GetDayUpdateDatetime(dayToday)
 	if err != nil {
 		return nil, e.Wrap("could not get today update datetime", err)
 	}
 
 	if currentDatetime.After(*todayUpdateDatetime) {
-		day = DAY_TOMORROW
+		day = dayTomorrow
 	}
 
 	nextUpdateDatetime, err = t.GetDayUpdateDatetime(day)
@@ -80,7 +79,7 @@ func (t *TimeChecks) GetTimeToNextUpdate() (*time.Duration, error) {
 }
 
 func (t *TimeChecks) GetDayUpdateDatetime(todayOffset int) (*time.Time, error) {
-	updateTime, err := time.Parse(TIME_ONLY_FORMAT, t.config.TimeWhenNeedToUpdateCurrency)
+	updateTime, err := time.Parse(time.TimeOnly, t.config.TimeWhenNeedToUpdateCurrency)
 	if err != nil {
 		return nil, e.Wrap("could not parse update time from config", err)
 	}

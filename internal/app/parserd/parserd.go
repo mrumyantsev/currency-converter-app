@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/mrumyantsev/currency-converter-app/internal/pkg/config"
-	"github.com/mrumyantsev/currency-converter-app/internal/pkg/consts"
 	dbstorage "github.com/mrumyantsev/currency-converter-app/internal/pkg/db-storage"
 	fsops "github.com/mrumyantsev/currency-converter-app/internal/pkg/fs-ops"
 	httpclient "github.com/mrumyantsev/currency-converter-app/internal/pkg/http-client"
@@ -214,9 +213,9 @@ func (a *App) getParsedDataFromSource() (*models.CurrencyStorage, error) {
 
 func replaceCommasWithDots(data []byte) error {
 	const (
-		START_DATA_INDEX int  = 100
-		CHAR_COMMA       byte = ','
-		CHAR_DOT         byte = '.'
+		startDataIndex = 100
+		charComma      = ','
+		charDot        = '.'
 	)
 
 	if data == nil {
@@ -225,9 +224,9 @@ func replaceCommasWithDots(data []byte) error {
 
 	lengthOfData := len(data)
 
-	for i := START_DATA_INDEX; i < lengthOfData; i++ {
-		if data[i] == CHAR_COMMA {
-			data[i] = CHAR_DOT
+	for i := startDataIndex; i < lengthOfData; i++ {
+		if data[i] == charComma {
+			data[i] = charDot
 		}
 	}
 
@@ -239,7 +238,7 @@ func (a *App) calculateOutputData() error {
 		currencyStorage      *models.CurrencyStorage     = a.memStorage.GetCurrencyStorage()
 		calculatedCurrencies []models.CalculatedCurrency = make(
 			[]models.CalculatedCurrency,
-			consts.LENGTH_OF_CURRENCIES_SCLICE_INITIAL,
+			0,
 			len(currencyStorage.Currencies),
 		)
 		calculatedCurrency models.CalculatedCurrency
@@ -269,9 +268,9 @@ func (a *App) calculateOutputData() error {
 
 func calculateRatio(currencyValue *string, currencyMultiplier *int) (*string, error) {
 	const (
-		FLOAT_BIT_SIZE          int  = 64
-		FLOAT_COMMON_FORMAT     byte = 'f'
-		FLOAT_MAXIMUM_PRECISION int  = -1
+		floatBitSize   = 64
+		floatFormat    = 'f'
+		floatPrecision = -1
 	)
 
 	var (
@@ -282,7 +281,7 @@ func calculateRatio(currencyValue *string, currencyMultiplier *int) (*string, er
 		err        error
 	)
 
-	value, err = strconv.ParseFloat(*currencyValue, FLOAT_BIT_SIZE)
+	value, err = strconv.ParseFloat(*currencyValue, floatBitSize)
 	if err != nil {
 		return nil, e.Wrap("could not parse string to float", err)
 	}
@@ -293,9 +292,9 @@ func calculateRatio(currencyValue *string, currencyMultiplier *int) (*string, er
 
 	output = strconv.FormatFloat(
 		result,
-		FLOAT_COMMON_FORMAT,
-		FLOAT_MAXIMUM_PRECISION,
-		FLOAT_BIT_SIZE,
+		floatFormat,
+		floatPrecision,
+		floatBitSize,
 	)
 
 	return &output, nil

@@ -8,12 +8,15 @@ import (
 	"time"
 
 	"github.com/mrumyantsev/currency-converter-app/internal/pkg/config"
-	"github.com/mrumyantsev/currency-converter-app/internal/pkg/consts"
 	"github.com/mrumyantsev/currency-converter-app/internal/pkg/models"
 	"github.com/mrumyantsev/currency-converter-app/pkg/lib/e"
 
 	"github.com/mrumyantsev/logx/log"
 	"golang.org/x/net/html/charset"
+)
+
+const (
+	initialCurrenciesCapacity = 50
 )
 
 type XmlParser struct {
@@ -62,16 +65,14 @@ func (p *XmlParser) Parse(data []byte) (*models.CurrencyStorage, error) {
 }
 
 func (p *XmlParser) getParsedDataMultiThreaded(decoder *xml.Decoder) (*models.CurrencyStorage, error) {
-	const (
-		CURRENCY_START_ELEMENT_NAME string = "Valute"
-	)
+	const firstElement = "Valute"
 
 	var (
 		currencyStorage models.CurrencyStorage = models.CurrencyStorage{
 			Currencies: make(
 				[]models.Currency,
-				consts.LENGTH_OF_CURRENCIES_SCLICE_INITIAL,
-				consts.CAPACITY_OF_CURRENCIES_SCLICE_INITIAL,
+				0,
+				initialCurrenciesCapacity,
 			),
 		}
 		currency     models.Currency
@@ -100,7 +101,7 @@ func (p *XmlParser) getParsedDataMultiThreaded(decoder *xml.Decoder) (*models.Cu
 			continue
 		}
 
-		if startElement.Name.Local == CURRENCY_START_ELEMENT_NAME {
+		if startElement.Name.Local == firstElement {
 			decoder.DecodeElement(&currency, &startElement)
 			currencyStorage.Currencies = append(currencyStorage.Currencies, currency)
 		}
@@ -114,8 +115,8 @@ func (p *XmlParser) getParsedDataSingleThreaded(decoder *xml.Decoder) (*models.C
 		currencyStorage models.CurrencyStorage = models.CurrencyStorage{
 			Currencies: make(
 				[]models.Currency,
-				consts.LENGTH_OF_CURRENCIES_SCLICE_INITIAL,
-				consts.CAPACITY_OF_CURRENCIES_SCLICE_INITIAL,
+				0,
+				initialCurrenciesCapacity,
 			),
 		}
 		err error

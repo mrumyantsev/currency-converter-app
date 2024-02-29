@@ -5,11 +5,14 @@ import (
 	"fmt"
 
 	"github.com/mrumyantsev/currency-converter-app/internal/pkg/config"
-	"github.com/mrumyantsev/currency-converter-app/internal/pkg/consts"
 	"github.com/mrumyantsev/currency-converter-app/internal/pkg/models"
 	"github.com/mrumyantsev/currency-converter-app/pkg/lib/e"
 
 	_ "github.com/lib/pq"
+)
+
+const (
+	initialCurrenciesCapacity = 50
 )
 
 type DbStorage struct {
@@ -148,8 +151,8 @@ func (s *DbStorage) GetLatestCurrencies(updateDatetimeId int) (*models.CurrencyS
 		currencyStorage models.CurrencyStorage = models.CurrencyStorage{
 			Currencies: make(
 				[]models.Currency,
-				consts.LENGTH_OF_CURRENCIES_SCLICE_INITIAL,
-				consts.CAPACITY_OF_CURRENCIES_SCLICE_INITIAL,
+				0,
+				initialCurrenciesCapacity,
 			),
 		}
 		currency models.Currency
