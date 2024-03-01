@@ -18,6 +18,6 @@ WORKDIR /project
 RUN apk update && \
     apk add ca-certificates
 
-COPY --from=builder /project .
+COPY --from=builder /project/server .
 
 ENTRYPOINT [ "./server" ]
