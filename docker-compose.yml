@@ -31,14 +31,10 @@ services:
         - GO_VER=${GO_VER}
         - ALPINE_VER=${ALPINE_VER}
         - APP_NAME=${SERVER_APP_NAME}
+    env_file:
+      - ./.env
     environment:
-      - ENABLE_DEBUG_LOGS=${ENABLE_DEBUG_LOGS}
       - DB_HOSTNAME=cc-db
-      - DB_PORT=${DB_PORT}
-      - DB_USERNAME=${DB_USERNAME}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_DATABASE=${DB_DATABASE}
-      - HTTP_SERVER_LISTEN_PORT=${HTTP_SERVER_LISTEN_PORT}
     networks:
       - cc-internal-network
       - cc-external-network
