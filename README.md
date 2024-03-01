@@ -50,7 +50,7 @@ make migrate
 #### Для Linux:
 
 ```
-sudo docker compose build
+docker compose build
 ```
 
 #### Для MacOS:
@@ -64,7 +64,7 @@ docker-compose build
 #### Для Linux:
 
 ```
-sudo docker compose up
+docker compose up
 ```
 
 #### Для MacOS:
@@ -84,7 +84,7 @@ http://localhost:8090/
 #### Для Linux:
 
 ```
-sudo docker compose down
+docker compose down
 ```
 
 #### Для MacOS:
