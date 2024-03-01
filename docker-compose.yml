@@ -7,10 +7,10 @@ services:
     restart: unless-stopped
     image: postgres:${POSTGRES_VER}-alpine${ALPINE_VER}
     environment:
-      - "PGDATA=/data"
-      - "POSTGRES_USER=${DB_USERNAME}"
-      - "POSTGRES_PASSWORD=${DB_PASSWORD}"
-      - "POSTGRES_DB=${DB_DATABASE}"
+      - PGDATA=/data
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_DATABASE}
     volumes:
       - ${DB_LOCAL_DIR}:/data
     networks:
@@ -28,17 +28,17 @@ services:
       context: .
       dockerfile: ./Dockerfile
       args:
-        - "GO_VER=${GO_VER}"
-        - "ALPINE_VER=${ALPINE_VER}"
-        - "APP_NAME=${SERVER_APP_NAME}"
+        - GO_VER=${GO_VER}
+        - ALPINE_VER=${ALPINE_VER}
+        - APP_NAME=${SERVER_APP_NAME}
     environment:
-      - "ENABLE_DEBUG_LOGS=${ENABLE_DEBUG_LOGS}"
-      - "DB_HOSTNAME=cc-db"
-      - "DB_PORT=${DB_PORT}"
-      - "DB_USERNAME=${DB_USERNAME}"
-      - "DB_PASSWORD=${DB_PASSWORD}"
-      - "DB_DATABASE=${DB_DATABASE}"
-      - "HTTP_SERVER_LISTEN_PORT=${HTTP_SERVER_LISTEN_PORT}"
+      - ENABLE_DEBUG_LOGS=${ENABLE_DEBUG_LOGS}
+      - DB_HOSTNAME=cc-db
+      - DB_PORT=${DB_PORT}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_DATABASE=${DB_DATABASE}
+      - HTTP_SERVER_LISTEN_PORT=${HTTP_SERVER_LISTEN_PORT}
     networks:
       - cc-internal-network
       - cc-external-network

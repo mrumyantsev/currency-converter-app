@@ -27,10 +27,10 @@ run-dbc:
 	--rm \
 	--name ${DB_MIGRATION_CONTAINER_NAME} \
 	-d \
-	-e "PGDATA=/data" \
-	-e "POSTGRES_USER=${DB_USERNAME}" \
-	-e "POSTGRES_PASSWORD=${DB_PASSWORD}" \
-	-e "POSTGRES_DB=${DB_DATABASE}" \
+	-e PGDATA=/data \
+	-e POSTGRES_USER=${DB_USERNAME} \
+	-e POSTGRES_PASSWORD=${DB_PASSWORD} \
+	-e POSTGRES_DB=${DB_DATABASE} \
 	-v ${DB_LOCAL_DIR}:/data \
 	-p ${DB_MIGRATION_PORT}:5432 \
 	postgres:${POSTGRES_VER}-alpine${ALPINE_VER}
@@ -38,13 +38,13 @@ run-dbc:
 .PHONY: migrate-up
 migrate-up:
 	./wait-for-postgres.sh \
-	"${DB_PASSWORD}" \
+	${DB_PASSWORD} \
 	${DB_HOSTNAME} \
 	${DB_MIGRATION_PORT} \
 	${DB_USERNAME} \
 	migrate \
 	-path ./schema \
-	-database "${DB_DRIVER}://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOSTNAME}:${DB_MIGRATION_PORT}/${DB_DATABASE}?sslmode=${DB_SSLMODE}" \
+	-database ${DB_DRIVER}://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOSTNAME}:${DB_MIGRATION_PORT}/${DB_DATABASE}?sslmode=${DB_SSLMODE} \
 	up
 
 .PHONY: stop-dbc
