@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  db:
+    container_name: cc-db
+    hostname: cc-db
+    restart: unless-stopped
+    image: postgres:${POSTGRES_VER}-alpine${ALPINE_VER}
+    environment:
+      - "PGDATA=/data"
+      - "POSTGRES_USER=${DB_USERNAME}"
+      - "POSTGRES_PASSWORD=${DB_PASSWORD}"
+      - "POSTGRES_DB=${DB_DATABASE}"
+    volumes:
+      - ${DB_LOCAL_DIR}:/data
+    networks:
+      - cc-internal-network
+    ports:
+      - ${DB_PORT}:5432
+
+  server:
+    container_name: cc-server
+    hostname: cc-server
+    restart: unless-stopped
+    depends_on:
+      - db
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      args:
+        - "GO_VER=${GO_VER}"
+        - "ALPINE_VER=${ALPINE_VER}"
+        - "APP_NAME=${SERVER_APP_NAME}"
+    environment:
+      - "ENABLE_DEBUG_LOGS=${ENABLE_DEBUG_LOGS}"
+      - "DB_HOSTNAME=cc-db"
+      - "DB_PORT=${DB_PORT}"
+      - "DB_USERNAME=${DB_USERNAME}"
+      - "DB_PASSWORD=${DB_PASSWORD}"
+      - "DB_DATABASE=${DB_DATABASE}"
+      - "HTTP_SERVER_LISTEN_PORT=${HTTP_SERVER_LISTEN_PORT}"
+    networks:
+      - cc-internal-network
+      - cc-external-network
+    ports:
+      - ${HTTP_SERVER_LISTEN_PORT}:${HTTP_SERVER_LISTEN_PORT}
+
+  web:
+    container_name: cc-web
+    hostname: cc-web
+    restart: unless-stopped
+    depends_on:
+      - server
+    image: nginx:${NGINX_VER}-alpine${ALPINE_VER}
+    volumes:
+      - ${WEB_LOCAL_DIR}:/usr/share/nginx/html
+    networks:
+      - cc-external-network
+    ports:
+      - ${WEB_PORT}:80
+
+networks:
+  cc-internal-network:
+    name: cc-internal-network
+    driver: bridge
+    internal: true
+
+  cc-external-network:
+    name: cc-external-network
+    driver: bridge
+    internal: false
