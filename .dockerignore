@@ -1,0 +1,9 @@
+*
+
+!cmd
+!internal
+!pkg
+
+!.env
+!go.mod
+!go.sum
