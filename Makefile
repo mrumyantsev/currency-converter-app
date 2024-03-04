@@ -2,6 +2,26 @@
 
 include ./.env
 
+export ALPINE_VER
+export DB_DATABASE
+export DB_DRIVER
+export DB_HOSTNAME
+export DB_LOCAL_DIR
+export DB_MIGRATION_CONTAINER_NAME
+export DB_MIGRATION_PORT
+export DB_PASSWORD
+export DB_PORT
+export DB_SSLMODE
+export DB_USERNAME
+export ENABLE_DEBUG_LOGS
+export GO_VER
+export HTTP_SERVER_LISTEN_PORT
+export NGINX_VER
+export POSTGRES_VER
+export SERVER_APP_NAME
+export WEB_LOCAL_DIR
+export WEB_PORT
+
 .PHONY: fast-run
 fast-run:
 	go run ./cmd/${SERVER_APP_NAME}/main.go
