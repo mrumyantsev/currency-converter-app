@@ -2,17 +2,17 @@ package models
 
 import "encoding/xml"
 
-type CurrencyStorage struct {
+type Currencies struct {
 	XMLName    xml.Name   `xml:"ValCurs"`
 	Currencies []Currency `xml:"Valute"`
 }
 
 type Currency struct {
-	NumCode       int    `xml:"NumCode"`
-	CharCode      string `xml:"CharCode"`
-	Multiplier    int    `xml:"Nominal"`
-	Name          string `xml:"Name"`
-	CurrencyValue string `xml:"Value"`
+	NumCode    int    `xml:"NumCode"`
+	CharCode   string `xml:"CharCode"`
+	Multiplier int    `xml:"Nominal"`
+	Name       string `xml:"Name"`
+	Value      string `xml:"Value"`
 }
 
 type UpdateDatetime struct {

@@ -21,12 +21,10 @@ type FsOps struct {
 }
 
 func New(cfg *config.Config) *FsOps {
-	return &FsOps{
-		config: cfg,
-	}
+	return &FsOps{config: cfg}
 }
 
-func (f *FsOps) GetCurrencyData() ([]byte, error) {
+func (f *FsOps) CurrencyData() ([]byte, error) {
 	err := makeDirIfNotExist(saveDir)
 	if err != nil {
 		return nil, err
@@ -53,7 +51,10 @@ func (f *FsOps) OverwriteCurrencyDataFile(data []byte) error {
 	}
 
 	err = os.WriteFile(
-		path.Join(saveDir, f.config.CurrencySourceFile), data, filePerm)
+		path.Join(saveDir, f.config.CurrencySourceFile),
+		data,
+		filePerm,
+	)
 	if err != nil {
 		return e.Wrap("could not write file", err)
 	}
@@ -67,8 +68,7 @@ func makeDirIfNotExist(path string) error {
 		return e.Wrap("could not check for save directory existence", err)
 	}
 
-	err = os.Mkdir(path, dirPerm)
-	if err != nil {
+	if err = os.Mkdir(path, dirPerm); err != nil {
 		return e.Wrap("could not make save directory", err)
 	}
 

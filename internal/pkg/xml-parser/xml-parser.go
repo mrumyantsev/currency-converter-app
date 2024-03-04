@@ -17,6 +17,7 @@ import (
 
 const (
 	initialCurrenciesCapacity = 50
+	firstXmlElement           = "Valute"
 )
 
 type XmlParser struct {
@@ -24,19 +25,17 @@ type XmlParser struct {
 }
 
 func New(cfg *config.Config) *XmlParser {
-	return &XmlParser{
-		config: cfg,
-	}
+	return &XmlParser{config: cfg}
 }
 
-func (p *XmlParser) Parse(data []byte) (*models.CurrencyStorage, error) {
+func (p *XmlParser) Parse(data []byte) (*models.Currencies, error) {
+	startTime := time.Now()
+	buffer := bytes.NewBuffer(data)
+	decoder := xml.NewDecoder(buffer)
 
 	var (
-		startTime       time.Time     = time.Now()
-		buffer          *bytes.Buffer = bytes.NewBuffer(data)
-		decoder         *xml.Decoder  = xml.NewDecoder(buffer)
-		currencyStorage *models.CurrencyStorage
-		err             error
+		currencies *models.Currencies
+		err        error
 	)
 
 	decoder.CharsetReader = charset.NewReaderLabel
@@ -44,14 +43,14 @@ func (p *XmlParser) Parse(data []byte) (*models.CurrencyStorage, error) {
 	if p.config.IsUseMultithreadedParsing {
 		log.Debug("using multithreaded parsing")
 
-		currencyStorage, err = p.getParsedDataMultiThreaded(decoder)
+		currencies, err = p.parsedDataMultiThreaded(decoder)
 		if err != nil {
 			return nil, e.Wrap("could not do multithreaded parsing", err)
 		}
 	} else {
 		log.Debug("using singlethreaded parsing")
 
-		currencyStorage, err = p.getParsedDataSingleThreaded(decoder)
+		currencies, err = p.parsedDataSingleThreaded(decoder)
 		if err != nil {
 			return nil, e.Wrap("could not do singlethreaded parsing", err)
 		}
@@ -61,20 +60,15 @@ func (p *XmlParser) Parse(data []byte) (*models.CurrencyStorage, error) {
 
 	log.Debug(fmt.Sprintf("parsing time overall: %s", elapsedTime))
 
-	return currencyStorage, nil
+	return currencies, nil
 }
 
-func (p *XmlParser) getParsedDataMultiThreaded(decoder *xml.Decoder) (*models.CurrencyStorage, error) {
-	const firstElement = "Valute"
+func (p *XmlParser) parsedDataMultiThreaded(decoder *xml.Decoder) (*models.Currencies, error) {
+	currencies := &models.Currencies{
+		Currencies: make([]models.Currency, 0, initialCurrenciesCapacity),
+	}
 
 	var (
-		currencyStorage models.CurrencyStorage = models.CurrencyStorage{
-			Currencies: make(
-				[]models.Currency,
-				0,
-				initialCurrenciesCapacity,
-			),
-		}
 		currency     models.Currency
 		token        xml.Token
 		startElement xml.StartElement
@@ -83,49 +77,39 @@ func (p *XmlParser) getParsedDataMultiThreaded(decoder *xml.Decoder) (*models.Cu
 	)
 
 	for {
-		token, err = decoder.Token()
-		if err != nil {
+		if token, err = decoder.Token(); err != nil {
 			if err == io.EOF {
 				break
 			}
 
 			return nil, e.Wrap("could not decode xml element", err)
 		}
-
 		if token == nil {
 			break
 		}
 
-		startElement, ok = token.(xml.StartElement)
-		if !ok {
+		if startElement, ok = token.(xml.StartElement); !ok {
 			continue
 		}
 
-		if startElement.Name.Local == firstElement {
+		if startElement.Name.Local == firstXmlElement {
 			decoder.DecodeElement(&currency, &startElement)
-			currencyStorage.Currencies = append(currencyStorage.Currencies, currency)
+
+			currencies.Currencies = append(currencies.Currencies, currency)
 		}
 	}
 
-	return &currencyStorage, nil
+	return currencies, nil
 }
 
-func (p *XmlParser) getParsedDataSingleThreaded(decoder *xml.Decoder) (*models.CurrencyStorage, error) {
-	var (
-		currencyStorage models.CurrencyStorage = models.CurrencyStorage{
-			Currencies: make(
-				[]models.Currency,
-				0,
-				initialCurrenciesCapacity,
-			),
-		}
-		err error
-	)
+func (p *XmlParser) parsedDataSingleThreaded(decoder *xml.Decoder) (*models.Currencies, error) {
+	currencies := &models.Currencies{
+		Currencies: make([]models.Currency, 0, initialCurrenciesCapacity),
+	}
 
-	err = decoder.Decode(&currencyStorage)
-	if err != nil {
+	if err := decoder.Decode(currencies); err != nil {
 		return nil, e.Wrap("could not decode xml data", err)
 	}
 
-	return &currencyStorage, nil
+	return currencies, nil
 }

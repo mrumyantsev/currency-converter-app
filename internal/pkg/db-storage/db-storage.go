@@ -16,53 +16,45 @@ const (
 )
 
 type DbStorage struct {
+	conn   *sql.DB // connection to database
 	config *config.Config
-	conn   *sql.DB
 }
 
 func New(cfg *config.Config) *DbStorage {
-	storage := &DbStorage{
-		config: cfg,
-	}
-
-	return storage
+	return &DbStorage{config: cfg}
 }
 
-// Connects to database.
+// Connect connects to database.
 func (s *DbStorage) Connect() error {
-	var (
-		psqlInfo = fmt.Sprintf("host=%s port=%s user=%s "+
-			"password=%s dbname=%s sslmode=%s",
-			s.config.DbHostname,
-			s.config.DbPort,
-			s.config.DbUsername,
-			s.config.DbPassword,
-			s.config.DbDatabase,
-			s.config.DbSSLMode,
-		)
-
-		err error
+	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
+		"password=%s dbname=%s sslmode=%s",
+		s.config.DbHostname,
+		s.config.DbPort,
+		s.config.DbUsername,
+		s.config.DbPassword,
+		s.config.DbDatabase,
+		s.config.DbSSLMode,
 	)
 
-	s.conn, err = sql.Open(s.config.DbDriver, psqlInfo)
-	if err != nil {
+	var err error
+
+	if s.conn, err = sql.Open(s.config.DbDriver, psqlInfo); err != nil {
 		return e.Wrap("could not connect to db", err)
 	}
 
 	return nil
 }
 
-// Disconnects from database.
+// Disconnect disconnects from database.
 func (s *DbStorage) Disconnect() error {
-	err := s.conn.Close()
-	if err != nil {
+	if err := s.conn.Close(); err != nil {
 		return e.Wrap("could not disconnect from db", err)
 	}
 
 	return nil
 }
 
-func (s *DbStorage) GetLatestUpdateDatetime() (*models.UpdateDatetime, error) {
+func (s *DbStorage) LatestUpdateDatetime() (*models.UpdateDatetime, error) {
 	query := `
 		SELECT id, update_datetime
 		FROM public.update_datetimes
@@ -76,18 +68,18 @@ func (s *DbStorage) GetLatestUpdateDatetime() (*models.UpdateDatetime, error) {
 	if err != nil {
 		return nil, e.Wrap("could not perform select of update datetimes", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
-	res := models.UpdateDatetime{}
+	updateDatetime := &models.UpdateDatetime{}
 
 	for rows.Next() {
-		err = rows.Scan(&res.Id, &res.UpdateDatetime)
+		err = rows.Scan(&updateDatetime.Id, &updateDatetime.UpdateDatetime)
 		if err != nil {
 			return nil, e.Wrap("could not scan from a row", err)
 		}
 	}
 
-	return &res, nil
+	return updateDatetime, nil
 }
 
 func (s *DbStorage) InsertUpdateDatetime(datetime string) (*models.UpdateDatetime, error) {
@@ -108,18 +100,14 @@ func (s *DbStorage) InsertUpdateDatetime(datetime string) (*models.UpdateDatetim
 		return nil, e.Wrap("could not execute inserting state of datetime", err)
 	}
 
-	var (
-		updateDatetime models.UpdateDatetime = models.UpdateDatetime{
-			UpdateDatetime: datetime,
-		}
-	)
+	updateDatetime := &models.UpdateDatetime{UpdateDatetime: datetime}
 
 	row.Scan(&updateDatetime.Id)
 
-	return &updateDatetime, nil
+	return updateDatetime, nil
 }
 
-func (s *DbStorage) GetLatestCurrencies(updateDatetimeId int) (*models.CurrencyStorage, error) {
+func (s *DbStorage) LatestCurrencies(updateDatetimeId int) (*models.Currencies, error) {
 	query := `
 		SELECT
 			public.info.num_code,
@@ -145,18 +133,17 @@ func (s *DbStorage) GetLatestCurrencies(updateDatetimeId int) (*models.CurrencyS
 	if err != nil {
 		return nil, e.Wrap("could not perform select of currencies", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
-	var (
-		currencyStorage models.CurrencyStorage = models.CurrencyStorage{
-			Currencies: make(
-				[]models.Currency,
-				0,
-				initialCurrenciesCapacity,
-			),
-		}
-		currency models.Currency
-	)
+	currencies := &models.Currencies{
+		Currencies: make(
+			[]models.Currency,
+			0,
+			initialCurrenciesCapacity,
+		),
+	}
+
+	var currency models.Currency
 
 	for rows.Next() {
 		err = rows.Scan(
@@ -164,19 +151,22 @@ func (s *DbStorage) GetLatestCurrencies(updateDatetimeId int) (*models.CurrencyS
 			&currency.CharCode,
 			&currency.Multiplier,
 			&currency.Name,
-			&currency.CurrencyValue,
+			&currency.Value,
 		)
 		if err != nil {
 			return nil, e.Wrap("could not scan currency entry from a row", err)
 		}
 
-		currencyStorage.Currencies = append(currencyStorage.Currencies, currency)
+		currencies.Currencies = append(
+			currencies.Currencies,
+			currency,
+		)
 	}
 
-	return &currencyStorage, nil
+	return currencies, nil
 }
 
-func (s *DbStorage) InsertCurrencies(currencyStorage *models.CurrencyStorage, updateDatetimeId int) error {
+func (s *DbStorage) InsertCurrencies(currencies *models.Currencies, updateDatetimeId int) error {
 	query := `
 		INSERT INTO public.currency_values
 		(currency_value, update_datetime_id, info_num_code)
@@ -184,11 +174,11 @@ func (s *DbStorage) InsertCurrencies(currencyStorage *models.CurrencyStorage, up
 		($1,$2,$3)
 	`
 
-	currenciesLength := len(currencyStorage.Currencies)
+	currenciesLength := len(currencies.Currencies)
 
 	extendCurrenciesQuery(
 		&query,
-		4, // it is means next placeholder: $4
+		4, // means next placeholder ($4)
 		0,
 		currenciesLength-1,
 	)
@@ -200,20 +190,18 @@ func (s *DbStorage) InsertCurrencies(currencyStorage *models.CurrencyStorage, up
 		return e.Wrap("could not prepare statement for inserting currencies", err)
 	}
 
-	var (
-		entries = []interface{}{}
-	)
+	entries := []interface{}{}
 
-	for _, currency := range currencyStorage.Currencies {
-		entries = append(entries,
-			currency.CurrencyValue,
+	for _, currency := range currencies.Currencies {
+		entries = append(
+			entries,
+			currency.Value,
 			updateDatetimeId,
 			currency.NumCode,
 		)
 	}
 
-	_, err = stmt.Exec(entries...)
-	if err != nil {
+	if _, err = stmt.Exec(entries...); err != nil {
 		return e.Wrap("could not execute inserting of currencies", err)
 	}
 

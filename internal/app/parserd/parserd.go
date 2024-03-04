@@ -2,7 +2,6 @@ package parserd
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -35,8 +34,7 @@ type App struct {
 func New() *App {
 	cfg := config.New()
 
-	err := cfg.Init()
-	if err != nil {
+	if err := cfg.Init(); err != nil {
 		log.Error("could not initialize configuration", err)
 	}
 
@@ -59,13 +57,12 @@ func New() *App {
 }
 
 func (a *App) SaveCurrencyDataToFile() {
-	data, err := a.httpClient.GetCurrencyData()
+	data, err := a.httpClient.CurrencyData()
 	if err != nil {
 		log.Fatal("could not get currencies from web", err)
 	}
 
-	err = a.fsOps.OverwriteCurrencyDataFile(data)
-	if err != nil {
+	if err = a.fsOps.OverwriteCurrencyDataFile(data); err != nil {
 		log.Fatal("could not write currencies to file", err)
 	}
 
@@ -74,60 +71,57 @@ func (a *App) SaveCurrencyDataToFile() {
 
 func (a *App) Run() {
 	var (
-		timeToNextUpdate *time.Duration
+		timeToNextUpdate time.Duration
 		err              error
 	)
 
 	for {
-		err = a.updateCurrencyDataInStorages()
-		if err != nil {
+		if err = a.updateCurrencyDataInStorages(); err != nil {
 			log.Fatal("could not update currency data in storages", err)
 		}
 
-		timeToNextUpdate, err = a.timeChecks.GetTimeToNextUpdate()
+		timeToNextUpdate, err = a.timeChecks.TimeToNextUpdate()
 		if err != nil {
 			log.Fatal("could not get time to next update", err)
 		}
 
 		log.Info("next update will occur after " +
-			(*timeToNextUpdate).Round(time.Second).String())
+			(timeToNextUpdate).Round(time.Second).String())
 
-		err = a.calculateOutputData()
-		if err != nil {
+		if err = a.calculateOutputData(); err != nil {
 			log.Fatal("could not calculate output data", err)
 		}
 
-		if !a.httpServer.GetIsRunning() {
+		if !a.httpServer.IsStarted() {
 			go func() {
-				err = a.httpServer.Run()
-				if err != nil {
-					log.Fatal("could not run http server", err)
+				if err := a.httpServer.Start(); err != nil {
+					log.Fatal("could not start http server", err)
 				}
 			}()
 		}
 
-		time.Sleep(*timeToNextUpdate)
+		time.Sleep(timeToNextUpdate)
 	}
 }
 
 func (a *App) updateCurrencyDataInStorages() error {
+	currentDatetime := time.Now().Format(time.RFC3339)
+
 	var (
-		latestUpdateDatetime  *models.UpdateDatetime
-		latestCurrencyStorage *models.CurrencyStorage
-		isNeedUpdate          bool
-		currentDatetime       string = time.Now().Format(time.RFC3339)
-		err                   error
+		latestUpdateDatetime *models.UpdateDatetime
+		latestCurrencies     *models.Currencies
+		isNeedUpdate         bool
+		err                  error
 	)
 
-	err = a.dbStorage.Connect()
-	if err != nil {
+	if err = a.dbStorage.Connect(); err != nil {
 		return e.Wrap("could not connect to db to do data update", err)
 	}
 	defer func() { _ = a.dbStorage.Disconnect() }()
 
 	log.Info("checking latest update datetime...")
 
-	latestUpdateDatetime, err = a.dbStorage.GetLatestUpdateDatetime()
+	latestUpdateDatetime, err = a.dbStorage.LatestUpdateDatetime()
 	if err != nil {
 		return e.Wrap("could not get current update datetime", err)
 	}
@@ -141,8 +135,7 @@ func (a *App) updateCurrencyDataInStorages() error {
 		log.Info("data is outdated")
 		log.Info("initializing update process...")
 
-		latestCurrencyStorage, err = a.getParsedDataFromSource()
-		if err != nil {
+		if latestCurrencies, err = a.parsedDataFromSource(); err != nil {
 			return e.Wrap("could not get parsed data from source", err)
 		}
 
@@ -153,27 +146,28 @@ func (a *App) updateCurrencyDataInStorages() error {
 			return e.Wrap("could not insert datetime into db", err)
 		}
 
-		err = a.dbStorage.InsertCurrencies(latestCurrencyStorage, latestUpdateDatetime.Id)
+		err = a.dbStorage.InsertCurrencies(latestCurrencies, latestUpdateDatetime.Id)
 		if err != nil {
 			return e.Wrap("could not insert currencies into db", err)
 		}
 	}
 
-	latestCurrencyStorage, err = a.dbStorage.GetLatestCurrencies(latestUpdateDatetime.Id)
+	latestCurrencies, err = a.dbStorage.LatestCurrencies(latestUpdateDatetime.Id)
 	if err != nil {
 		return e.Wrap("could not get currencies from db", err)
 	}
 
 	a.memStorage.SetUpdateDatetime(latestUpdateDatetime)
-	a.memStorage.SetCurrencyStorage(latestCurrencyStorage)
+	a.memStorage.SetCurrencies(latestCurrencies)
 
 	log.Info("data is now up to date")
 
 	return nil
 }
 
-func (a *App) getParsedDataFromSource() (*models.CurrencyStorage, error) {
+func (a *App) parsedDataFromSource() (*models.Currencies, error) {
 	var (
+		currencies   *models.Currencies
 		currencyData []byte
 		err          error
 	)
@@ -183,32 +177,28 @@ func (a *App) getParsedDataFromSource() (*models.CurrencyStorage, error) {
 	if a.config.IsReadCurrencyDataFromFile {
 		log.Debug("getting data from local file...")
 
-		currencyData, err = a.fsOps.GetCurrencyData()
-		if err != nil {
+		if currencyData, err = a.fsOps.CurrencyData(); err != nil {
 			return nil, e.Wrap("could not get currencies from file", err)
 		}
 	} else {
 		log.Debug("getting data from web...")
 
-		currencyData, err = a.httpClient.GetCurrencyData()
-		if err != nil {
+		if currencyData, err = a.httpClient.CurrencyData(); err != nil {
 			return nil, e.Wrap("could not get curencies from web", err)
 		}
 	}
 
-	err = replaceCommasWithDots(currencyData)
-	if err != nil {
+	if err = replaceCommasWithDots(currencyData); err != nil {
 		return nil, e.Wrap("could not replace commas in data", err)
 	}
 
 	log.Info("parsing data...")
 
-	currencyStorage, err := a.xmlParser.Parse(currencyData)
-	if err != nil {
+	if currencies, err = a.xmlParser.Parse(currencyData); err != nil {
 		return nil, e.Wrap("could not parse data", err)
 	}
 
-	return currencyStorage, nil
+	return currencies, nil
 }
 
 func replaceCommasWithDots(data []byte) error {
@@ -234,39 +224,40 @@ func replaceCommasWithDots(data []byte) error {
 }
 
 func (a *App) calculateOutputData() error {
+	currencies := a.memStorage.Currencies()
+	calculatedCurrencies := make(
+		[]models.CalculatedCurrency,
+		0,
+		len(currencies.Currencies),
+	)
+
 	var (
-		currencyStorage      *models.CurrencyStorage     = a.memStorage.GetCurrencyStorage()
-		calculatedCurrencies []models.CalculatedCurrency = make(
-			[]models.CalculatedCurrency,
-			0,
-			len(currencyStorage.Currencies),
-		)
 		calculatedCurrency models.CalculatedCurrency
-		ratio              *string
+		ratio              string
 		err                error
 	)
 
 	log.Info("calculate output data...")
 
-	for _, currency := range currencyStorage.Currencies {
-		ratio, err = calculateRatio(&currency.CurrencyValue, &currency.Multiplier)
+	for _, currency := range currencies.Currencies {
+		ratio, err = calculateRatio(currency.Value, currency.Multiplier)
 		if err != nil {
 			return e.Wrap("could not calculate currency rate", err)
 		}
 
 		calculatedCurrency.Name = currency.Name
 		calculatedCurrency.CharCode = currency.CharCode
-		calculatedCurrency.Ratio = *ratio
+		calculatedCurrency.Ratio = ratio
 
 		calculatedCurrencies = append(calculatedCurrencies, calculatedCurrency)
 	}
 
-	a.memStorage.SetCalculatedCurrency(calculatedCurrencies)
+	a.memStorage.SetCalculatedCurrencies(calculatedCurrencies)
 
 	return nil
 }
 
-func calculateRatio(currencyValue *string, currencyMultiplier *int) (*string, error) {
+func calculateRatio(currencyValue string, currencyMultiplier int) (string, error) {
 	const (
 		floatBitSize   = 64
 		floatFormat    = 'f'
@@ -281,12 +272,12 @@ func calculateRatio(currencyValue *string, currencyMultiplier *int) (*string, er
 		err        error
 	)
 
-	value, err = strconv.ParseFloat(*currencyValue, floatBitSize)
+	value, err = strconv.ParseFloat(currencyValue, floatBitSize)
 	if err != nil {
-		return nil, e.Wrap("could not parse string to float", err)
+		return output, e.Wrap("could not parse string to float", err)
 	}
 
-	multiplier = float64(*currencyMultiplier)
+	multiplier = float64(currencyMultiplier)
 
 	result = 1 / (value / multiplier)
 
@@ -297,16 +288,16 @@ func calculateRatio(currencyValue *string, currencyMultiplier *int) (*string, er
 		floatBitSize,
 	)
 
-	return &output, nil
+	return output, nil
 }
 
-// Prints data. For debugging purposes.
-func printData(currencyStorage *models.CurrencyStorage) {
-	for _, currency := range currencyStorage.Currencies {
-		fmt.Println(currency.NumCode)
-		fmt.Println(" ", currency.CharCode)
-		fmt.Println(" ", currency.Multiplier)
-		fmt.Println(" ", currency.Name)
-		fmt.Println(" ", currency.CurrencyValue)
-	}
-}
+// printData prints currency data. For debugging purposes.
+// func printData(currencies *models.CurrencyStorage) {
+// 	for _, currency := range currencies.Currencies {
+// 		fmt.Println(currency.NumCode)
+// 		fmt.Println(" ", currency.CharCode)
+// 		fmt.Println(" ", currency.Multiplier)
+// 		fmt.Println(" ", currency.Name)
+// 		fmt.Println(" ", currency.CurrencyValue)
+// 	}
+// }

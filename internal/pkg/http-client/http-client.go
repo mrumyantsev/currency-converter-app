@@ -14,24 +14,20 @@ import (
 )
 
 const (
-	userAgentHeader = "User-Agent"
+	headerUserAgent = "User-Agent"
+	methodGet       = "GET"
 )
 
 type HttpClient struct {
-	config *config.Config
 	client *http.Client
+	config *config.Config
 }
 
 func New(cfg *config.Config) *HttpClient {
-	httpClient := &HttpClient{
-		config: cfg,
-		client: &http.Client{},
-	}
-
-	return httpClient
+	return &HttpClient{client: &http.Client{}, config: cfg}
 }
 
-func (c *HttpClient) GetCurrencyData() ([]byte, error) {
+func (c *HttpClient) CurrencyData() ([]byte, error) {
 	startTime := time.Now()
 
 	url, err := url.Parse(c.config.CurrencySourceUrl)
@@ -50,7 +46,7 @@ func (c *HttpClient) GetCurrencyData() ([]byte, error) {
 	if err != nil {
 		return nil, e.Wrap("could not read data from response body", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	elapsedTime := time.Since(startTime)
 
@@ -64,11 +60,11 @@ func (c *HttpClient) createRequest(url *url.URL) *http.Request {
 	log.Debug(fmt.Sprintf("using user-agent header: %s", c.config.FakeUserAgentHeaderValue))
 
 	return &http.Request{
-		Method: "GET",
+		Method: methodGet,
 		URL:    url,
 		Proto:  c.config.HttpRequestProtocol,
 		Header: map[string][]string{
-			userAgentHeader: {c.config.FakeUserAgentHeaderValue},
+			headerUserAgent: {c.config.FakeUserAgentHeaderValue},
 		},
 	}
 }

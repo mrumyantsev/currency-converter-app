@@ -19,69 +19,74 @@ type TimeChecks struct {
 }
 
 func New(cfg *config.Config) *TimeChecks {
-	return &TimeChecks{
-		config: cfg,
-	}
+	return &TimeChecks{config: cfg}
 }
 
 func (t *TimeChecks) IsNeedForUpdateDb(updateDatetime *models.UpdateDatetime) (bool, error) {
 	latestUpdateDatetime, err := time.Parse(
-		time.RFC3339, updateDatetime.UpdateDatetime)
+		time.RFC3339,
+		updateDatetime.UpdateDatetime,
+	)
 	if err != nil {
 		return false, e.Wrap("could not parse update time from db", err)
 	}
 
-	todayUpdateDatetime, err := t.GetDayUpdateDatetime(dayToday)
+	todayUpdateDatetime, err := t.DayUpdateDatetime(dayToday)
 	if err != nil {
 		return false, e.Wrap("could not get today update datetime", err)
 	}
 
-	yesterdayUpdateDatetime, err := t.GetDayUpdateDatetime(dayYesterday)
+	yesterdayUpdateDatetime, err := t.DayUpdateDatetime(dayYesterday)
 	if err != nil {
 		return false, e.Wrap("could not get yesterday update datetime", err)
 	}
 
 	currentDatetime := time.Now()
 
-	return !(latestUpdateDatetime.After(*todayUpdateDatetime) ||
-		((latestUpdateDatetime.After(*yesterdayUpdateDatetime) &&
-			latestUpdateDatetime.Before(*todayUpdateDatetime)) &&
-			currentDatetime.Before(*todayUpdateDatetime))), nil
+	isNeedUpdate := !(latestUpdateDatetime.After(todayUpdateDatetime) ||
+		((latestUpdateDatetime.After(yesterdayUpdateDatetime) &&
+			latestUpdateDatetime.Before(todayUpdateDatetime)) &&
+			currentDatetime.Before(todayUpdateDatetime)))
+
+	return isNeedUpdate, nil
 }
 
-func (t *TimeChecks) GetTimeToNextUpdate() (*time.Duration, error) {
+func (t *TimeChecks) TimeToNextUpdate() (time.Duration, error) {
+	currentDatetime := time.Now()
+	day := dayToday
+
 	var (
-		currentDatetime     time.Time = time.Now()
-		todayUpdateDatetime *time.Time
-		nextUpdateDatetime  *time.Time
+		todayUpdateDatetime time.Time
+		nextUpdateDatetime  time.Time
 		timeToNextUpdate    time.Duration
-		day                 int = dayToday
 		err                 error
 	)
 
-	todayUpdateDatetime, err = t.GetDayUpdateDatetime(dayToday)
+	todayUpdateDatetime, err = t.DayUpdateDatetime(dayToday)
 	if err != nil {
-		return nil, e.Wrap("could not get today update datetime", err)
+		return timeToNextUpdate, e.Wrap("could not get today update datetime", err)
 	}
 
-	if currentDatetime.After(*todayUpdateDatetime) {
+	if currentDatetime.After(todayUpdateDatetime) {
 		day = dayTomorrow
 	}
 
-	nextUpdateDatetime, err = t.GetDayUpdateDatetime(day)
-	if err != nil {
-		return nil, e.Wrap("could not get next update datetime", err)
+	if nextUpdateDatetime, err = t.DayUpdateDatetime(day); err != nil {
+		return timeToNextUpdate, e.Wrap("could not get next update datetime", err)
 	}
 
-	timeToNextUpdate = time.Since(*nextUpdateDatetime).Abs()
+	timeToNextUpdate = time.Since(nextUpdateDatetime).Abs()
 
-	return &timeToNextUpdate, nil
+	return timeToNextUpdate, nil
 }
 
-func (t *TimeChecks) GetDayUpdateDatetime(todayOffset int) (*time.Time, error) {
-	updateTime, err := time.Parse(time.TimeOnly, t.config.TimeWhenNeedToUpdateCurrency)
+func (t *TimeChecks) DayUpdateDatetime(todayOffset int) (time.Time, error) {
+	updateTime, err := time.Parse(
+		time.TimeOnly,
+		t.config.TimeWhenNeedToUpdateCurrency,
+	)
 	if err != nil {
-		return nil, e.Wrap("could not parse update time from config", err)
+		return updateTime, e.Wrap("could not parse update time from config", err)
 	}
 
 	todayYear, todayMonth, todayDay := time.Now().Date()
@@ -97,5 +102,5 @@ func (t *TimeChecks) GetDayUpdateDatetime(todayOffset int) (*time.Time, error) {
 		time.Now().Location(),
 	)
 
-	return &todayUpdateDatetime, nil
+	return todayUpdateDatetime, nil
 }

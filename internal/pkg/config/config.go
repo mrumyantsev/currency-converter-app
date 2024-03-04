@@ -5,6 +5,7 @@ import (
 	"github.com/mrumyantsev/currency-converter-app/pkg/lib/e"
 )
 
+// A Config is the application configuration structure.
 type Config struct {
 	IsEnableDebugLogs            bool   `envconfig:"ENABLE_DEBUG_LOGS" default:"false"`
 	IsReadCurrencyDataFromFile   bool   `envconfig:"READ_CURRENCIES_FROM_FILE" default:"false"`
@@ -27,15 +28,14 @@ type Config struct {
 	HttpServerListenPort string `envconfig:"HTTP_SERVER_LISTEN_PORT" default:"8080"`
 }
 
-// New Config constructor.
+// New creates application configuration.
 func New() *Config {
 	return &Config{}
 }
 
-// Init initialization from environment variables
+// Init initializes application configuration.
 func (c *Config) Init() error {
-	err := envconfig.Process("", c)
-	if err != nil {
+	if err := envconfig.Process("", c); err != nil {
 		return e.Wrap("could not populate struct with environment variables", err)
 	}
 
