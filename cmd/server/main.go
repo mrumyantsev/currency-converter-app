@@ -3,11 +3,11 @@ package main
 import (
 	"flag"
 
-	"github.com/mrumyantsev/currency-converter-app/internal/app/parserd"
+	"github.com/mrumyantsev/currency-converter-app/internal/app/server"
 )
 
 func main() {
-	app := parserd.New()
+	app := server.New()
 
 	if isUserWantSave() {
 		app.SaveCurrencyDataToFile()

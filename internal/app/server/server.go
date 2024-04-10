@@ -1,4 +1,4 @@
-package parserd
+package server
 
 import (
 	"errors"
