@@ -2,7 +2,7 @@ package config
 
 import (
 	"github.com/kelseyhightower/envconfig"
-	"github.com/mrumyantsev/currency-converter-app/pkg/lib/e"
+	"github.com/mrumyantsev/currency-converter-app/pkg/lib"
 )
 
 // A Config is the application configuration structure.
@@ -15,6 +15,7 @@ type Config struct {
 	FakeUserAgentHeaderValue     string `envconfig:"FAKE_USER_AGENT_HEADER_VALUE" default:"Mozilla/5.0 (X11; Linux x86_64)"`
 	IsUseMultithreadedParsing    bool   `envconfig:"USE_MULTITHREADED_PARSING" default:"true"`
 	TimeWhenNeedToUpdateCurrency string `envconfig:"TIME_WHEN_NEED_TO_UPDATE_CURRENCY" default:"13:30:00"`
+	InitialCurrenciesCapacity    int    `envconfig:"INITIAL_CURRENCIES_CAPACITY" default:"50"`
 
 	DbDriver   string `envconfig:"DB_DRIVER" default:"postgres"`
 	DbHostname string `envconfig:"DB_HOSTNAME" default:"localhost"`
@@ -24,19 +25,18 @@ type Config struct {
 	DbDatabase string `envconfig:"DB_DATABASE" default:"currency_storage"`
 	DbSSLMode  string `envconfig:"DB_SSLMODE" default:"disable"`
 
-	HttpServerListenIp   string `envconfig:"HTTP_SERVER_LISTEN_IP" default:"0.0.0.0"`
-	HttpServerListenPort string `envconfig:"HTTP_SERVER_LISTEN_PORT" default:"8080"`
+	HttpServerListenAddress string `envconfig:"HTTP_SERVER_LISTEN_ADDRESS" default:":8080"`
 }
 
 // New creates application configuration.
 func New() *Config {
-	return &Config{}
+	return new(Config)
 }
 
 // Init initializes application configuration.
 func (c *Config) Init() error {
 	if err := envconfig.Process("", c); err != nil {
-		return e.Wrap("could not populate struct with environment variables", err)
+		return lib.WrapErr("could not populate struct with environment variables", err)
 	}
 
 	return nil
