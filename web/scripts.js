@@ -1,4 +1,4 @@
-const serverUrl = "http://127.0.0.1:8080/currencies.json";
+const serverUrl = "http://127.0.0.1:8080/currencies";
 const dataUpdateIntervalMilliseconds = 300000;
 const decimalDigitsInResultValue = 4;
 
