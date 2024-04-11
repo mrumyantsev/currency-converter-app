@@ -7,7 +7,7 @@ import (
 	"path"
 
 	"github.com/mrumyantsev/currency-converter-app/internal/pkg/config"
-	"github.com/mrumyantsev/currency-converter-app/pkg/lib/e"
+	"github.com/mrumyantsev/currency-converter-app/pkg/lib/errlib"
 )
 
 const (
@@ -32,13 +32,13 @@ func (f *FsOps) CurrencyData() ([]byte, error) {
 
 	file, err := os.Open(path.Join(saveDir, f.config.CurrencySourceFile))
 	if err != nil {
-		return nil, e.Wrap("could not open file", err)
+		return nil, errlib.Wrap("could not open file", err)
 	}
 	defer func() { _ = file.Close() }()
 
 	data, err := io.ReadAll(file)
 	if err != nil {
-		return nil, e.Wrap("could not read all data from file", err)
+		return nil, errlib.Wrap("could not read all data from file", err)
 	}
 
 	return data, nil
@@ -56,7 +56,7 @@ func (f *FsOps) OverwriteCurrencyDataFile(data []byte) error {
 		filePerm,
 	)
 	if err != nil {
-		return e.Wrap("could not write file", err)
+		return errlib.Wrap("could not write file", err)
 	}
 
 	return nil
@@ -65,11 +65,11 @@ func (f *FsOps) OverwriteCurrencyDataFile(data []byte) error {
 func makeDirIfNotExist(path string) error {
 	_, err := os.Stat(path)
 	if !errors.Is(err, os.ErrNotExist) {
-		return e.Wrap("could not check for save directory existence", err)
+		return errlib.Wrap("could not check for save directory existence", err)
 	}
 
 	if err = os.Mkdir(path, dirPerm); err != nil {
-		return e.Wrap("could not make save directory", err)
+		return errlib.Wrap("could not make save directory", err)
 	}
 
 	return nil

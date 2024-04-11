@@ -2,7 +2,7 @@ package config
 
 import (
 	"github.com/kelseyhightower/envconfig"
-	"github.com/mrumyantsev/currency-converter-app/pkg/lib"
+	"github.com/mrumyantsev/currency-converter-app/pkg/lib/errlib"
 )
 
 // A Config is the application configuration structure.
@@ -36,7 +36,7 @@ func New() *Config {
 // Init initializes application configuration.
 func (c *Config) Init() error {
 	if err := envconfig.Process("", c); err != nil {
-		return lib.WrapErr("could not populate struct with environment variables", err)
+		return errlib.Wrap("could not populate struct with environment variables", err)
 	}
 
 	return nil
