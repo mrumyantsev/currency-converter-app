@@ -1,7 +1,11 @@
 package server
 
 import (
+	"context"
 	"flag"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/labstack/echo/v4/middleware"
 
@@ -83,19 +87,50 @@ func (a *App) Run() {
 		return
 	}
 
+	log.Info("service started")
+
 	err := a.database.Connect()
 	if err != nil {
-		log.Fatal("could not connect to db to do data update", err)
+		log.Fatal("could not connect to database", err)
 	}
-	defer func() { _ = a.database.Disconnect() }()
+
+	log.Debug("database connection opened")
+
+	isShutdown := false
 
 	go func() {
-		if err := a.server.Start(); err != nil {
-			log.Fatal("could not start server", err)
+		if err = a.server.Start(); (err != nil) && !isShutdown {
+			log.Fatal("could not start http server", err)
 		}
 	}()
 
-	a.workLoop()
+	go a.workLoop()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	<-quit // Waiting for a signal to the graceful shutdown
+
+	log.Info("shutdown signal read")
+
+	isShutdown = true
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err = a.server.Shutdown(ctx); err != nil {
+		log.Fatal("could not shutdown http server", err)
+	}
+
+	log.Debug("http server shut down")
+
+	if err = a.database.Disconnect(); err != nil {
+		log.Fatal("could not disconnect from database", err)
+	}
+
+	log.Debug("database connection closed")
+
+	log.Info("service gracefully shut down")
 }
 
 func (a *App) SaveCurrencyDataToFile() {
