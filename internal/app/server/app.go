@@ -42,11 +42,11 @@ type App struct {
 	server     *server.Server
 }
 
-func New() *App {
+func New() (*App, error) {
 	cfg := config.New()
 
 	if err := cfg.Init(); err != nil {
-		log.Error("could not initialize configuration", err)
+		return nil, errlib.Wrap("could not initialize configuration", err)
 	}
 
 	log.ApplyConfig(&logx.Config{
@@ -77,76 +77,87 @@ func New() *App {
 		service:    service,
 		endpoint:   endpoint,
 		server:     server,
-	}
+	}, nil
 }
 
-func (a *App) Run() {
-	if isUserWantSave() {
-		a.SaveCurrencyDataToFile()
-
-		return
-	}
-
+func (a *App) Run() error {
 	log.Info("service started")
 
 	err := a.database.Connect()
 	if err != nil {
-		log.Fatal("could not connect to database", err)
+		return errlib.Wrap("could not connect to database", err)
 	}
 
 	log.Debug("database connection opened")
 
+	goErr := make(chan error, 1)
+
 	isShutdown := false
 
 	go func() {
-		if err = a.server.Start(); (err != nil) && !isShutdown {
-			log.Fatal("could not start http server", err)
+		if err := a.server.Start(); (err != nil) && !isShutdown {
+			goErr <- errlib.Wrap("could not start http server", err)
 		}
 	}()
 
-	go a.workLoop()
+	go func() {
+		if err := a.workLoop(); err != nil {
+			goErr <- errlib.Wrap("could not proceed work loop", err)
+		}
+	}()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
-	<-quit // Waiting for a signal to the graceful shutdown
+	select {
+	case err := <-goErr:
+		return err
+	case <-quit:
+		break
+	}
+
+	// Graceful shutdown
 
 	log.Info("shutdown signal read")
 
 	isShutdown = true
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	ctx, shutdown := context.WithTimeout(context.Background(), 5*time.Second)
+	defer shutdown()
 
 	if err = a.server.Shutdown(ctx); err != nil {
-		log.Fatal("could not shutdown http server", err)
+		return errlib.Wrap("could not shutdown http server", err)
 	}
 
 	log.Debug("http server shut down")
 
 	if err = a.database.Disconnect(); err != nil {
-		log.Fatal("could not disconnect from database", err)
+		return errlib.Wrap("could not disconnect from database", err)
 	}
 
 	log.Debug("database connection closed")
 
 	log.Info("service gracefully shut down")
+
+	return nil
 }
 
-func (a *App) SaveCurrencyDataToFile() {
+func (a *App) SaveCurrencyDataToFile() error {
 	data, err := a.endpoint.CurrenciesFromSource()
 	if err != nil {
-		log.Fatal("could not get currencies from web", err)
+		return errlib.Wrap("could not get currencies from web", err)
 	}
 
 	if err = a.fsOps.OverwriteCurrencyDataFile(data); err != nil {
-		log.Fatal("could not write currencies to file", err)
+		return errlib.Wrap("could not write currencies to file", err)
 	}
 
 	log.Info("currency data saved in file: " + a.config.CurrencySourceFile)
+
+	return nil
 }
 
-func (a *App) workLoop() {
+func (a *App) workLoop() error {
 	var (
 		timeToNextUpdate time.Duration
 		err              error
@@ -154,23 +165,25 @@ func (a *App) workLoop() {
 
 	for {
 		if err = a.updateCurrencyDataInStorages(); err != nil {
-			log.Fatal("could not update currency data in storages", err)
+			return errlib.Wrap("could not update currency data in storages", err)
 		}
 
 		timeToNextUpdate, err = a.timeChecks.TimeToNextUpdate()
 		if err != nil {
-			log.Fatal("could not get time to next update", err)
+			return errlib.Wrap("could not get time to next update", err)
 		}
 
 		log.Info("next update will occur after " +
 			(timeToNextUpdate).Round(time.Second).String())
 
 		if err = a.calculateOutputData(); err != nil {
-			log.Fatal("could not calculate output data", err)
+			return errlib.Wrap("could not calculate output data", err)
 		}
 
 		time.Sleep(timeToNextUpdate)
 	}
+
+	return nil
 }
 
 func (a *App) updateCurrencyDataInStorages() error {
