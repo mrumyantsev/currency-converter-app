@@ -25,7 +25,8 @@ type Config struct {
 	DbDatabase string `envconfig:"DB_DATABASE" default:"currency_storage"`
 	DbSSLMode  string `envconfig:"DB_SSLMODE" default:"disable"`
 
-	HttpServerListenAddress string `envconfig:"HTTP_SERVER_LISTEN_ADDRESS" default:":8080"`
+	HttpServerListenIp   string `envconfig:"HTTP_SERVER_LISTEN_IP" default:"0.0.0.0"`
+	HttpServerListenPort string `envconfig:"HTTP_SERVER_LISTEN_PORT" default:"8080"`
 }
 
 // New creates application configuration.

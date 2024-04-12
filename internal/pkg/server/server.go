@@ -30,7 +30,9 @@ func New(cfg *config.Config, ep *endpoint.Endpoint, mw ...echo.MiddlewareFunc) *
 }
 
 func (s *Server) Start() error {
-	if err := s.echo.Start(s.config.HttpServerListenAddress); err != nil {
+	listenAddr := s.config.HttpServerListenIp + ":" + s.config.HttpServerListenPort
+
+	if err := s.echo.Start(listenAddr); err != nil {
 		return errlib.Wrap("could not start http server", err)
 	}
 
