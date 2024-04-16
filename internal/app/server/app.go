@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"flag"
 	"os"
 	"os/signal"
 	"syscall"
@@ -143,7 +142,7 @@ func (a *App) Run() error {
 }
 
 func (a *App) SaveCurrencyDataToFile() error {
-	data, err := a.endpoint.CurrenciesFromSource()
+	data, err := a.endpoint.CurrenciesFromSource.CurrenciesFromSource()
 	if err != nil {
 		return errlib.Wrap("could not get currencies from web", err)
 	}
@@ -260,7 +259,7 @@ func (a *App) parsedDataFromSource() (models.Currencies, error) {
 	} else {
 		log.Debug("getting data from web...")
 
-		if currencyData, err = a.endpoint.CurrenciesFromSource(); err != nil {
+		if currencyData, err = a.endpoint.CurrenciesFromSource.CurrenciesFromSource(); err != nil {
 			return currencies, errlib.Wrap("could not get curencies from web", err)
 		}
 	}
@@ -367,12 +366,4 @@ func calculateRatio(currencyValue string, currencyMultiplier int) (string, error
 	)
 
 	return output, nil
-}
-
-func isUserWantSave() bool {
-	f := flag.Bool("s", false, "Save currency data to a local file")
-
-	flag.Parse()
-
-	return *f
 }

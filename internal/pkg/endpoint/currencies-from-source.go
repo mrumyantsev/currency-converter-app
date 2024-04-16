@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/mrumyantsev/currency-converter-app/internal/pkg/config"
 	"github.com/mrumyantsev/currency-converter-app/pkg/lib/errlib"
 	"github.com/mrumyantsev/logx/log"
 )
@@ -16,7 +17,19 @@ const (
 	headerUserAgent = "User-Agent"
 )
 
-func (e *Endpoint) CurrenciesFromSource() ([]byte, error) {
+type CurrenciesFromSourceEndpoint struct {
+	config *config.Config
+	client *http.Client
+}
+
+func NewCurrenciesFromSourceEndpoint(cfg *config.Config) *CurrenciesFromSourceEndpoint {
+	return &CurrenciesFromSourceEndpoint{
+		config: cfg,
+		client: new(http.Client),
+	}
+}
+
+func (e *CurrenciesFromSourceEndpoint) CurrenciesFromSource() ([]byte, error) {
 	startTime := time.Now()
 
 	url, err := url.Parse(e.config.CurrencySourceUrl)
@@ -44,7 +57,7 @@ func (e *Endpoint) CurrenciesFromSource() ([]byte, error) {
 	return data, nil
 }
 
-func (e *Endpoint) request(url *url.URL, method string) *http.Request {
+func (e *CurrenciesFromSourceEndpoint) request(url *url.URL, method string) *http.Request {
 	log.Debug(fmt.Sprintf("using %s protocol in request", e.config.HttpRequestProtocol))
 	log.Debug(fmt.Sprintf("using user-agent header: %s", e.config.FakeUserAgentHeaderValue))
 
