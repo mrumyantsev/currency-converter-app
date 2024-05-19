@@ -37,7 +37,7 @@ func (d *Database) Connect() error {
 
 	db, err := sql.Open(d.config.DbDriver, dataSourceName)
 	if err != nil {
-		return errlib.Wrap("could not connect to db", err)
+		return errlib.Wrap(err, "could not connect to db")
 	}
 
 	d.DB = db
@@ -48,7 +48,7 @@ func (d *Database) Connect() error {
 // Disconnect disconnects from the database.
 func (d *Database) Disconnect() error {
 	if err := d.DB.Close(); err != nil {
-		return errlib.Wrap("could not disconnect from db", err)
+		return errlib.Wrap(err, "could not disconnect from db")
 	}
 
 	return nil

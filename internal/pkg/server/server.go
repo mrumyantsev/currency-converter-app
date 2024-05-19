@@ -33,7 +33,7 @@ func (s *Server) Start() error {
 	listenAddr := s.config.HttpServerListenIp + ":" + s.config.HttpServerListenPort
 
 	if err := s.echo.Start(listenAddr); err != nil {
-		return errlib.Wrap("could not start http server", err)
+		return errlib.Wrap(err, "could not start http server")
 	}
 
 	return nil
@@ -41,7 +41,7 @@ func (s *Server) Start() error {
 
 func (s *Server) Shutdown(ctx context.Context) error {
 	if err := s.echo.Shutdown(ctx); err != nil {
-		return errlib.Wrap("could not shutdown http server", err)
+		return errlib.Wrap(err, "could not shutdown http server")
 	}
 
 	return nil

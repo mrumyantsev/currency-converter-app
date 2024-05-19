@@ -8,7 +8,7 @@ import (
 	memcache "github.com/mrumyantsev/currency-converter-app/internal/pkg/mem-cache"
 	"github.com/mrumyantsev/currency-converter-app/internal/pkg/service"
 	"github.com/mrumyantsev/currency-converter-app/pkg/lib/errlib"
-	"github.com/mrumyantsev/logx/log"
+	"github.com/rs/zerolog/log"
 )
 
 type CurrenciesEndpoint struct {
@@ -31,9 +31,9 @@ func (e *CurrenciesEndpoint) Currencies(ctx echo.Context) error {
 	if err := ctx.JSON(http.StatusOK, calculatedCurrencies); err != nil {
 		errMsg := "could not send reponse data"
 
-		log.Error(errMsg, err)
+		log.Error().Err(err).Msg(errMsg)
 
-		return errlib.Wrap(errMsg, err)
+		return errlib.Wrap(err, errMsg)
 	}
 
 	return nil

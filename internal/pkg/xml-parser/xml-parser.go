@@ -10,8 +10,8 @@ import (
 	"github.com/mrumyantsev/currency-converter-app/internal/pkg/config"
 	"github.com/mrumyantsev/currency-converter-app/internal/pkg/models"
 	"github.com/mrumyantsev/currency-converter-app/pkg/lib/errlib"
+	"github.com/rs/zerolog/log"
 
-	"github.com/mrumyantsev/logx/log"
 	"golang.org/x/net/html/charset"
 )
 
@@ -40,24 +40,24 @@ func (p *XmlParser) Parse(data []byte) (models.Currencies, error) {
 	decoder.CharsetReader = charset.NewReaderLabel
 
 	if p.config.IsUseMultithreadedParsing {
-		log.Debug("using multithreaded parsing")
+		log.Debug().Msg("using multithreaded parsing")
 
 		currencies, err = p.parsedDataMultiThreaded(decoder)
 		if err != nil {
-			return currencies, errlib.Wrap("could not do multithreaded parsing", err)
+			return currencies, errlib.Wrap(err, "could not do multithreaded parsing")
 		}
 	} else {
-		log.Debug("using singlethreaded parsing")
+		log.Debug().Msg("using singlethreaded parsing")
 
 		currencies, err = p.parsedDataSingleThreaded(decoder)
 		if err != nil {
-			return currencies, errlib.Wrap("could not do singlethreaded parsing", err)
+			return currencies, errlib.Wrap(err, "could not do singlethreaded parsing")
 		}
 	}
 
 	elapsedTime := time.Since(startTime)
 
-	log.Debug(fmt.Sprintf("parsing time overall: %s", elapsedTime))
+	log.Debug().Msg(fmt.Sprintf("parsing time overall: %s", elapsedTime))
 
 	return currencies, nil
 }
@@ -81,7 +81,7 @@ func (p *XmlParser) parsedDataMultiThreaded(decoder *xml.Decoder) (models.Curren
 				break
 			}
 
-			return currencies, errlib.Wrap("could not decode xml element", err)
+			return currencies, errlib.Wrap(err, "could not decode xml element")
 		}
 		if token == nil {
 			break
@@ -107,7 +107,7 @@ func (p *XmlParser) parsedDataSingleThreaded(decoder *xml.Decoder) (models.Curre
 	}
 
 	if err := decoder.Decode(&currencies); err != nil {
-		return currencies, errlib.Wrap("could not decode xml data", err)
+		return currencies, errlib.Wrap(err, "could not decode xml data")
 	}
 
 	return currencies, nil

@@ -2,6 +2,10 @@ package errlib
 
 import "fmt"
 
-func Wrap(msg string, err error) error {
-	return fmt.Errorf("%s: %w", msg, err)
+const (
+	tmplWrap = "%s: %w"
+)
+
+func Wrap(err error, msg string) error {
+	return fmt.Errorf(tmplWrap, msg, err)
 }

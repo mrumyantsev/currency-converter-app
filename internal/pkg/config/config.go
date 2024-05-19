@@ -1,8 +1,14 @@
 package config
 
 import (
+	"errors"
+
 	"github.com/kelseyhightower/envconfig"
 	"github.com/mrumyantsev/currency-converter-app/pkg/lib/errlib"
+)
+
+const (
+	EnvPrefix = ""
 )
 
 // A Config is the application configuration structure.
@@ -29,15 +35,19 @@ type Config struct {
 	HttpServerListenPort string `envconfig:"HTTP_SERVER_LISTEN_PORT" default:"8080"`
 }
 
-// New creates application configuration.
+// New creates an application configuration.
 func New() *Config {
-	return new(Config)
+	return &Config{}
 }
 
 // Init initializes application configuration.
 func (c *Config) Init() error {
-	if err := envconfig.Process("", c); err != nil {
-		return errlib.Wrap("could not populate struct with environment variables", err)
+	if err := envconfig.Process(EnvPrefix, c); err != nil {
+		return errlib.Wrap(err, "could not populate config structure")
+	}
+
+	if c.DbPassword == "" {
+		return errors.New("no database password specified")
 	}
 
 	return nil

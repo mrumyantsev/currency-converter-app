@@ -41,7 +41,7 @@ VALUES
 
 	stmt, err := r.database.Prepare(query)
 	if err != nil {
-		return errlib.Wrap("could not prepare statement for inserting currencies", err)
+		return errlib.Wrap(err, "could not prepare statement for inserting currencies")
 	}
 
 	entries := []any{}
@@ -56,7 +56,7 @@ VALUES
 	}
 
 	if _, err = stmt.Exec(entries...); err != nil {
-		return errlib.Wrap("could not execute inserting of currencies", err)
+		return errlib.Wrap(err, "could not execute inserting of currencies")
 	}
 
 	return nil
@@ -88,12 +88,12 @@ ORDER BY public.info.name;
 
 	stmt, err := r.database.Prepare(query)
 	if err != nil {
-		return currencies, errlib.Wrap("could not prepare statement for getting currencies", err)
+		return currencies, errlib.Wrap(err, "could not prepare statement for getting currencies")
 	}
 
 	rows, err := stmt.Query(updateDatetimeId)
 	if err != nil {
-		return currencies, errlib.Wrap("could not perform select of currencies", err)
+		return currencies, errlib.Wrap(err, "could not perform select of currencies")
 	}
 	defer func() { _ = rows.Close() }()
 
@@ -108,7 +108,7 @@ ORDER BY public.info.name;
 			&currency.Value,
 		)
 		if err != nil {
-			return currencies, errlib.Wrap("could not scan currency entry from a row", err)
+			return currencies, errlib.Wrap(err, "could not scan currency entry from a row")
 		}
 
 		currencies.Currencies = append(

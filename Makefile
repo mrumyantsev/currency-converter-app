@@ -1,5 +1,5 @@
 .SILENT:
-.DEFAULT_GOAL := fast-run
+.DEFAULT_GOAL := run-fast
 
 include ./.env
 
@@ -22,6 +22,22 @@ export POSTGRES_VER
 export SERVER_APP_NAME
 export WEB_LOCAL_DIR
 export WEB_PORT
+
+.PHONY: build
+build:
+	go build -o ./build/${SERVER_APP_NAME} ./cmd/${SERVER_APP_NAME}/main.go
+
+.PHONY: run
+run:
+	./build/${SERVER_APP_NAME}
+
+.PHONY: run-fast
+run-fast:
+	go run ./cmd/${SERVER_APP_NAME}/main.go
+
+.PHONY: save
+save:
+	./build/${SERVER_APP_NAME} -s
 
 .PHONY: migrate
 migrate: run-dbc migrate-up stop-dbc
@@ -55,19 +71,3 @@ migrate-up:
 .PHONY: stop-dbc
 stop-dbc:
 	docker stop ${DB_MIGRATION_CONTAINER_NAME}
-
-.PHONY: build
-build:
-	go build -o ./build/${SERVER_APP_NAME} ./cmd/${SERVER_APP_NAME}/main.go
-
-.PHONY: run
-run:
-	./build/${SERVER_APP_NAME}
-
-.PHONY: fast-run
-fast-run:
-	go run ./cmd/${SERVER_APP_NAME}/main.go
-
-.PHONY: save
-save:
-	./build/${SERVER_APP_NAME} -s

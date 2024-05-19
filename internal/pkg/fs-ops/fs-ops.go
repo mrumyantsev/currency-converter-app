@@ -32,13 +32,13 @@ func (f *FsOps) CurrencyData() ([]byte, error) {
 
 	file, err := os.Open(path.Join(saveDir, f.config.CurrencySourceFile))
 	if err != nil {
-		return nil, errlib.Wrap("could not open file", err)
+		return nil, errlib.Wrap(err, "could not open file")
 	}
 	defer func() { _ = file.Close() }()
 
 	data, err := io.ReadAll(file)
 	if err != nil {
-		return nil, errlib.Wrap("could not read all data from file", err)
+		return nil, errlib.Wrap(err, "could not read all data from file")
 	}
 
 	return data, nil
@@ -56,7 +56,7 @@ func (f *FsOps) OverwriteCurrencyDataFile(data []byte) error {
 		filePerm,
 	)
 	if err != nil {
-		return errlib.Wrap("could not write file", err)
+		return errlib.Wrap(err, "could not write file")
 	}
 
 	return nil
@@ -65,11 +65,11 @@ func (f *FsOps) OverwriteCurrencyDataFile(data []byte) error {
 func makeDirIfNotExist(path string) error {
 	_, err := os.Stat(path)
 	if !errors.Is(err, os.ErrNotExist) {
-		return errlib.Wrap("could not check for save directory existence", err)
+		return errlib.Wrap(err, "could not check for save directory existence")
 	}
 
 	if err = os.Mkdir(path, dirPerm); err != nil {
-		return errlib.Wrap("could not make save directory", err)
+		return errlib.Wrap(err, "could not make save directory")
 	}
 
 	return nil

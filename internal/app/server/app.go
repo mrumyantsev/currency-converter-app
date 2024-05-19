@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/rs/zerolog/log"
 
 	"errors"
 	"strconv"
@@ -24,9 +25,6 @@ import (
 	timechecks "github.com/mrumyantsev/currency-converter-app/internal/pkg/time-checks"
 	xmlparser "github.com/mrumyantsev/currency-converter-app/internal/pkg/xml-parser"
 	"github.com/mrumyantsev/currency-converter-app/pkg/lib/errlib"
-	"github.com/mrumyantsev/logx"
-
-	"github.com/mrumyantsev/logx/log"
 )
 
 type App struct {
@@ -45,12 +43,8 @@ func New() (*App, error) {
 	cfg := config.New()
 
 	if err := cfg.Init(); err != nil {
-		return nil, errlib.Wrap("could not initialize configuration", err)
+		return nil, errlib.Wrap(err, "could not initialize configuration")
 	}
-
-	log.ApplyConfig(&logx.Config{
-		IsDisableDebugLogs: !cfg.IsEnableDebugLogs,
-	})
 
 	memCache := memcache.New()
 
@@ -80,14 +74,14 @@ func New() (*App, error) {
 }
 
 func (a *App) Run() error {
-	log.Info("service started")
+	log.Info().Msg("service started")
 
 	err := a.database.Connect()
 	if err != nil {
-		return errlib.Wrap("could not connect to database", err)
+		return errlib.Wrap(err, "could not connect to database")
 	}
 
-	log.Debug("database connection opened")
+	log.Debug().Msg("database connection opened")
 
 	goErr := make(chan error, 1)
 
@@ -95,13 +89,13 @@ func (a *App) Run() error {
 
 	go func() {
 		if err := a.server.Start(); (err != nil) && !isShutdown {
-			goErr <- errlib.Wrap("could not start http server", err)
+			goErr <- errlib.Wrap(err, "could not start http server")
 		}
 	}()
 
 	go func() {
 		if err := a.workLoop(); err != nil {
-			goErr <- errlib.Wrap("could not proceed work loop", err)
+			goErr <- errlib.Wrap(err, "could not proceed work loop")
 		}
 	}()
 
@@ -117,7 +111,7 @@ func (a *App) Run() error {
 
 	// Graceful shutdown
 
-	log.Info("shutdown signal read")
+	log.Info().Msg("shutdown signal read")
 
 	isShutdown = true
 
@@ -125,18 +119,18 @@ func (a *App) Run() error {
 	defer shutdown()
 
 	if err = a.server.Shutdown(ctx); err != nil {
-		return errlib.Wrap("could not shutdown http server", err)
+		return errlib.Wrap(err, "could not shutdown http server")
 	}
 
-	log.Debug("http server shut down")
+	log.Debug().Msg("http server shut down")
 
 	if err = a.database.Disconnect(); err != nil {
-		return errlib.Wrap("could not disconnect from database", err)
+		return errlib.Wrap(err, "could not disconnect from database")
 	}
 
-	log.Debug("database connection closed")
+	log.Debug().Msg("database connection closed")
 
-	log.Info("service gracefully shut down")
+	log.Info().Msg("service gracefully shut down")
 
 	return nil
 }
@@ -144,14 +138,14 @@ func (a *App) Run() error {
 func (a *App) SaveCurrencyDataToFile() error {
 	data, err := a.endpoint.CurrenciesFromSource.CurrenciesFromSource()
 	if err != nil {
-		return errlib.Wrap("could not get currencies from web", err)
+		return errlib.Wrap(err, "could not get currencies from web")
 	}
 
 	if err = a.fsOps.OverwriteCurrencyDataFile(data); err != nil {
-		return errlib.Wrap("could not write currencies to file", err)
+		return errlib.Wrap(err, "could not write currencies to file")
 	}
 
-	log.Info("currency data saved in file: " + a.config.CurrencySourceFile)
+	log.Info().Msg("currency data saved in file: " + a.config.CurrencySourceFile)
 
 	return nil
 }
@@ -164,19 +158,19 @@ func (a *App) workLoop() error {
 
 	for {
 		if err = a.updateCurrencyDataInStorages(); err != nil {
-			return errlib.Wrap("could not update currency data in storages", err)
+			return errlib.Wrap(err, "could not update currency data in storages")
 		}
 
 		timeToNextUpdate, err = a.timeChecks.TimeToNextUpdate()
 		if err != nil {
-			return errlib.Wrap("could not get time to next update", err)
+			return errlib.Wrap(err, "could not get time to next update")
 		}
 
-		log.Info("next update will occur after " +
+		log.Info().Msg("next update will occur after " +
 			(timeToNextUpdate).Round(time.Second).String())
 
 		if err = a.calculateOutputData(); err != nil {
-			return errlib.Wrap("could not calculate output data", err)
+			return errlib.Wrap(err, "could not calculate output data")
 		}
 
 		time.Sleep(timeToNextUpdate)
@@ -195,48 +189,48 @@ func (a *App) updateCurrencyDataInStorages() error {
 		err                  error
 	)
 
-	log.Info("checking latest update datetime...")
+	log.Info().Msg("checking latest update datetime...")
 
 	latestUpdateDatetime, err = a.service.UpdateDatetime.GetLatest()
 	if err != nil {
-		return errlib.Wrap("could not get current update datetime", err)
+		return errlib.Wrap(err, "could not get current update datetime")
 	}
 
 	isNeedUpdate, err = a.timeChecks.IsNeedForUpdateDb(&latestUpdateDatetime)
 	if err != nil {
-		return errlib.Wrap("could not check is need update for db or not", err)
+		return errlib.Wrap(err, "could not check is need update for db or not")
 	}
 
 	if isNeedUpdate {
-		log.Info("data is outdated")
-		log.Info("initializing update process...")
+		log.Info().Msg("data is outdated")
+		log.Info().Msg("initializing update process...")
 
 		if latestCurrencies, err = a.parsedDataFromSource(); err != nil {
-			return errlib.Wrap("could not get parsed data from source", err)
+			return errlib.Wrap(err, "could not get parsed data from source")
 		}
 
-		log.Info("saving data...")
+		log.Info().Msg("saving data...")
 
 		latestUpdateDatetime, err = a.service.UpdateDatetime.Create(currentDatetime)
 		if err != nil {
-			return errlib.Wrap("could not insert datetime into db", err)
+			return errlib.Wrap(err, "could not insert datetime into db")
 		}
 
 		err = a.service.Currencies.Create(latestCurrencies, latestUpdateDatetime.Id)
 		if err != nil {
-			return errlib.Wrap("could not insert currencies into db", err)
+			return errlib.Wrap(err, "could not insert currencies into db")
 		}
 	}
 
 	latestCurrencies, err = a.service.Currencies.GetLatest(latestUpdateDatetime.Id)
 	if err != nil {
-		return errlib.Wrap("could not get currencies from db", err)
+		return errlib.Wrap(err, "could not get currencies from db")
 	}
 
 	a.memCache.SetUpdateDatetime(&latestUpdateDatetime)
 	a.memCache.SetCurrencies(&latestCurrencies)
 
-	log.Info("data is now up to date")
+	log.Info().Msg("data is now up to date")
 
 	return nil
 }
@@ -248,30 +242,30 @@ func (a *App) parsedDataFromSource() (models.Currencies, error) {
 		err          error
 	)
 
-	log.Info("getting new data...")
+	log.Info().Msg("getting new data...")
 
 	if a.config.IsReadCurrencyDataFromFile {
-		log.Debug("getting data from local file...")
+		log.Debug().Msg("getting data from local file...")
 
 		if currencyData, err = a.fsOps.CurrencyData(); err != nil {
-			return currencies, errlib.Wrap("could not get currencies from file", err)
+			return currencies, errlib.Wrap(err, "could not get currencies from file")
 		}
 	} else {
-		log.Debug("getting data from web...")
+		log.Debug().Msg("getting data from web...")
 
 		if currencyData, err = a.endpoint.CurrenciesFromSource.CurrenciesFromSource(); err != nil {
-			return currencies, errlib.Wrap("could not get curencies from web", err)
+			return currencies, errlib.Wrap(err, "could not get curencies from web")
 		}
 	}
 
 	if err = replaceCommasWithDots(currencyData); err != nil {
-		return currencies, errlib.Wrap("could not replace commas in data", err)
+		return currencies, errlib.Wrap(err, "could not replace commas in data")
 	}
 
-	log.Info("parsing data...")
+	log.Info().Msg("parsing data...")
 
 	if currencies, err = a.xmlParser.Parse(currencyData); err != nil {
-		return currencies, errlib.Wrap("could not parse data", err)
+		return currencies, errlib.Wrap(err, "could not parse data")
 	}
 
 	return currencies, nil
@@ -314,12 +308,12 @@ func (a *App) calculateOutputData() error {
 		err                error
 	)
 
-	log.Info("calculate output data...")
+	log.Info().Msg("calculate output data...")
 
 	for _, currency := range currencies.Currencies {
 		ratio, err = calculateRatio(currency.Value, currency.Multiplier)
 		if err != nil {
-			return errlib.Wrap("could not calculate currency rate", err)
+			return errlib.Wrap(err, "could not calculate currency rate")
 		}
 
 		calculatedCurrency.Name = currency.Name
@@ -351,7 +345,7 @@ func calculateRatio(currencyValue string, currencyMultiplier int) (string, error
 
 	value, err = strconv.ParseFloat(currencyValue, floatBitSize)
 	if err != nil {
-		return output, errlib.Wrap("could not parse string to float", err)
+		return output, errlib.Wrap(err, "could not parse string to float")
 	}
 
 	multiplier = float64(currencyMultiplier)

@@ -9,7 +9,7 @@ import (
 
 	"github.com/mrumyantsev/currency-converter-app/internal/pkg/config"
 	"github.com/mrumyantsev/currency-converter-app/pkg/lib/errlib"
-	"github.com/mrumyantsev/logx/log"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -34,32 +34,32 @@ func (e *CurrenciesFromSourceEndpoint) CurrenciesFromSource() ([]byte, error) {
 
 	url, err := url.Parse(e.config.CurrencySourceUrl)
 	if err != nil {
-		return nil, errlib.Wrap("could not parse url", err)
+		return nil, errlib.Wrap(err, "could not parse url")
 	}
 
 	req := e.request(url, methodGet)
 
 	resp, err := e.client.Do(req)
 	if err != nil {
-		return nil, errlib.Wrap("could not send request to server", err)
+		return nil, errlib.Wrap(err, "could not send request to server")
 	}
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, errlib.Wrap("could not read data from response body", err)
+		return nil, errlib.Wrap(err, "could not read data from response body")
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	elapsedTime := time.Since(startTime)
 
-	log.Debug("getting http data time overall: " + elapsedTime.String())
+	log.Debug().Msg("getting http data time overall: " + elapsedTime.String())
 
 	return data, nil
 }
 
 func (e *CurrenciesFromSourceEndpoint) request(url *url.URL, method string) *http.Request {
-	log.Debug(fmt.Sprintf("using %s protocol in request", e.config.HttpRequestProtocol))
-	log.Debug(fmt.Sprintf("using user-agent header: %s", e.config.FakeUserAgentHeaderValue))
+	log.Debug().Msg(fmt.Sprintf("using %s protocol in request", e.config.HttpRequestProtocol))
+	log.Debug().Msg(fmt.Sprintf("using user-agent header: %s", e.config.FakeUserAgentHeaderValue))
 
 	if method == "" {
 		method = methodGet

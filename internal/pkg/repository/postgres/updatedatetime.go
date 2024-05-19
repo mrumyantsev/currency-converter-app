@@ -32,12 +32,12 @@ RETURNING id;
 
 	stmt, err := r.database.Prepare(query)
 	if err != nil {
-		return updateDatetime, errlib.Wrap("could not prepare statement for inserting datetime", err)
+		return updateDatetime, errlib.Wrap(err, "could not prepare statement for inserting datetime")
 	}
 
 	row := stmt.QueryRow(datetime)
 	if err != nil {
-		return updateDatetime, errlib.Wrap("could not execute inserting state of datetime", err)
+		return updateDatetime, errlib.Wrap(err, "could not execute inserting state of datetime")
 	}
 
 	row.Scan(&updateDatetime.Id)
@@ -58,14 +58,14 @@ WHERE id = (
 
 	rows, err := r.database.Query(query)
 	if err != nil {
-		return updateDatetime, errlib.Wrap("could not perform select of update datetimes", err)
+		return updateDatetime, errlib.Wrap(err, "could not perform select of update datetimes")
 	}
 	defer func() { _ = rows.Close() }()
 
 	for rows.Next() {
 		err = rows.Scan(&updateDatetime.Id, &updateDatetime.UpdateDatetime)
 		if err != nil {
-			return updateDatetime, errlib.Wrap("could not scan from a row", err)
+			return updateDatetime, errlib.Wrap(err, "could not scan from a row")
 		}
 	}
 
