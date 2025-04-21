@@ -1,5 +1,5 @@
 .vscode/
-.dbdata/
+volumes/
 build/
 save/
 
