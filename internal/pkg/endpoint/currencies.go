@@ -7,7 +7,7 @@ import (
 	"github.com/mrumyantsev/currency-converter-app/internal/pkg/config"
 	memcache "github.com/mrumyantsev/currency-converter-app/internal/pkg/mem-cache"
 	"github.com/mrumyantsev/currency-converter-app/internal/pkg/service"
-	"github.com/mrumyantsev/currency-converter-app/pkg/lib/errlib"
+	"github.com/mrumyantsev/go-errlib"
 	"github.com/rs/zerolog/log"
 )
 

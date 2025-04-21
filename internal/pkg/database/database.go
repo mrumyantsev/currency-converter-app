@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/mrumyantsev/currency-converter-app/internal/pkg/config"
-	"github.com/mrumyantsev/currency-converter-app/pkg/lib/errlib"
+	"github.com/mrumyantsev/go-errlib"
 
 	"database/sql"
 

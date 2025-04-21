@@ -24,7 +24,7 @@ import (
 	"github.com/mrumyantsev/currency-converter-app/internal/pkg/service"
 	timechecks "github.com/mrumyantsev/currency-converter-app/internal/pkg/time-checks"
 	xmlparser "github.com/mrumyantsev/currency-converter-app/internal/pkg/xml-parser"
-	"github.com/mrumyantsev/currency-converter-app/pkg/lib/errlib"
+	"github.com/mrumyantsev/go-errlib"
 )
 
 type App struct {

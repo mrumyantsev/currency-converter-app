@@ -6,7 +6,7 @@ import (
 	"github.com/mrumyantsev/currency-converter-app/internal/pkg/config"
 	"github.com/mrumyantsev/currency-converter-app/internal/pkg/database"
 	"github.com/mrumyantsev/currency-converter-app/internal/pkg/models"
-	"github.com/mrumyantsev/currency-converter-app/pkg/lib/errlib"
+	"github.com/mrumyantsev/go-errlib"
 )
 
 type CurrenciesRepository struct {

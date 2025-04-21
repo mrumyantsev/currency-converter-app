@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/kelseyhightower/envconfig"
-	"github.com/mrumyantsev/currency-converter-app/pkg/lib/errlib"
+	"github.com/mrumyantsev/go-errlib"
 )
 
 const (
